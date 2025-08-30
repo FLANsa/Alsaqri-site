@@ -590,7 +590,7 @@ def download_barcode_pdf(phone_number):
                 arabic_font = None
                 for font_path in font_paths:
                     if os.path.exists(font_path):
-                        arabic_font = ImageFont.truetype(font_path, 48)
+                        arabic_font = ImageFont.truetype(font_path, 32)
                         break
                 
                 if arabic_font is None:
@@ -639,7 +639,7 @@ def download_barcode_pdf(phone_number):
             start_y = height_px - 70
             
             # Use smaller font for details
-            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 10) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
+            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 8) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
             
             # Device number - Column 1
             device_label = "رقم الجهاز"
