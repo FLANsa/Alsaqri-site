@@ -507,13 +507,13 @@ def generate_barcode(phone_number, battery_age=None, customer_phone=None, custom
     barcode_class = barcode.get_barcode_class('code128')
     barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
     
-    # Set custom options for the barcode (smaller for sticker)
+    # Set custom options for the barcode (very small for sticker)
     options = {
-        'module_width': 0.15,  # Width of each bar (smaller)
-        'module_height': 12,   # Height of the barcode (smaller)
-        'font_size': 8,        # Font size for the number (smaller)
-        'text_distance': 1,    # Distance between barcode and text
-        'quiet_zone': 1,       # Quiet zone around the barcode
+        'module_width': 0.1,   # Width of each bar (very small)
+        'module_height': 8,    # Height of the barcode (very small)
+        'font_size': 6,        # Font size for the number (very small)
+        'text_distance': 0.5,  # Distance between barcode and text
+        'quiet_zone': 0.5,     # Quiet zone around the barcode
         'dpi': 300            # DPI for better quality
     }
     
@@ -525,11 +525,11 @@ def generate_barcode(phone_number, battery_age=None, customer_phone=None, custom
     filename = f"static/barcodes/{phone_number}"
     barcode_path = barcode_instance.save(filename, options)
     
-    # Convert the saved image to sticker size (3cm x 2cm)
+    # Convert the saved image to small sticker size (2.5cm x 1.5cm)
     img = Image.open(barcode_path)
     # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(3.0 * 37.795276)  # 3cm width
-    height_px = int(2.0 * 37.795276) # 2cm height
+    width_px = int(2.5 * 37.795276)  # 2.5cm width
+    height_px = int(1.5 * 37.795276) # 1.5cm height
     img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
     img.save(barcode_path)
     
