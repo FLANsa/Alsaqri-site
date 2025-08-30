@@ -429,11 +429,24 @@ def login():
 @login_required
 def dashboard():
     phones = Phone.query.all()
+    accessories = Accessory.query.all()
     
-    # Calculate financial summaries for current inventory
+    # Calculate financial summaries for current inventory (phones + accessories)
     total_phones = len(phones)
-    total_purchase_value = sum(phone.purchase_price for phone in phones)
-    total_selling_value = sum(phone.selling_price for phone in phones)
+    total_accessories = sum(acc.quantity_in_stock for acc in accessories)
+    total_items = total_phones + total_accessories
+    
+    # Phone values
+    phone_purchase_value = sum(phone.purchase_price for phone in phones)
+    phone_selling_value = sum(phone.selling_price for phone in phones)
+    
+    # Accessory values (considering quantity in stock)
+    accessory_purchase_value = sum(acc.purchase_price_with_vat * acc.quantity_in_stock for acc in accessories)
+    accessory_selling_value = sum(acc.selling_price_with_vat * acc.quantity_in_stock for acc in accessories)
+    
+    # Total values for all inventory
+    total_purchase_value = phone_purchase_value + accessory_purchase_value
+    total_selling_value = phone_selling_value + accessory_selling_value
     total_expected_profit = total_selling_value - total_purchase_value
     
     # Recent sales
@@ -461,7 +474,14 @@ def dashboard():
     
     return render_template('dashboard.html', 
                          phones=phones,
+                         accessories=accessories,
                          total_phones=total_phones,
+                         total_accessories=total_accessories,
+                         total_items=total_items,
+                         phone_purchase_value=phone_purchase_value,
+                         phone_selling_value=phone_selling_value,
+                         accessory_purchase_value=accessory_purchase_value,
+                         accessory_selling_value=accessory_selling_value,
                          total_purchase_value=total_purchase_value,
                          total_selling_value=total_selling_value,
                          total_expected_profit=total_expected_profit,

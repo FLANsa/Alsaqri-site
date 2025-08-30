@@ -15,25 +15,43 @@
     
     <!-- Inventory Overview Cards - Smaller and More Organized -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card bg-primary text-white h-100">
                 <div class="card-body text-center py-3">
                     <i class="fas fa-mobile-alt fa-2x mb-2"></i>
-                    <h6 class="card-title mb-1">إجمالي الهواتف</h6>
+                    <h6 class="card-title mb-1">الهواتف</h6>
                     <h3 class="mb-0">{{ total_phones }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body text-center py-3">
+                    <i class="fas fa-box fa-2x mb-2"></i>
+                    <h6 class="card-title mb-1">الأكسسوارات</h6>
+                    <h3 class="mb-0">{{ total_accessories }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-body text-center py-3">
+                    <i class="fas fa-warehouse fa-2x mb-2"></i>
+                    <h6 class="card-title mb-1">إجمالي المخزون</h6>
+                    <h3 class="mb-0">{{ total_items }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
             <div class="card bg-success text-white h-100">
                 <div class="card-body text-center py-3">
                     <i class="fas fa-cash-register fa-2x mb-2"></i>
-                    <h6 class="card-title mb-1">عدد المبيعات</h6>
+                    <h6 class="card-title mb-1">المبيعات</h6>
                     <h3 class="mb-0">{{ total_sales_count }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card bg-info text-white h-100">
                 <div class="card-body text-center py-3">
                     <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
@@ -43,7 +61,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card bg-warning text-white h-100">
                 <div class="card-body text-center py-3">
                     <i class="fas fa-coins fa-2x mb-2"></i>
@@ -60,33 +78,57 @@
         <div class="col-md-4">
             <div class="card bg-light h-100">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> القيم الشرائية</h5>
+                    <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> القيم الشرائية (المخزون الكامل)</h5>
                 </div>
                 <div class="card-body text-center">
                     <h3 class="text-primary">{{ "%.2f"|format(total_purchase_value) }} ريال</h3>
                     <p class="text-muted">إجمالي قيمة شراء المخزون</p>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <small class="text-muted">الهواتف: {{ "%.2f"|format(phone_purchase_value) }} ريال</small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">الأكسسوارات: {{ "%.2f"|format(accessory_purchase_value) }} ريال</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card bg-light h-100">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-tags"></i> القيم البيعية</h5>
+                    <h5 class="mb-0"><i class="fas fa-tags"></i> القيم البيعية (المخزون الكامل)</h5>
                 </div>
                 <div class="card-body text-center">
                     <h3 class="text-success">{{ "%.2f"|format(total_selling_value) }} ريال</h3>
                     <p class="text-muted">إجمالي قيمة بيع المخزون</p>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <small class="text-muted">الهواتف: {{ "%.2f"|format(phone_selling_value) }} ريال</small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">الأكسسوارات: {{ "%.2f"|format(accessory_selling_value) }} ريال</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card bg-light h-100">
                 <div class="card-header bg-warning text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> الربح المتوقع</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> الربح المتوقع (المخزون الكامل)</h5>
                 </div>
                 <div class="card-body text-center">
                     <h3 class="text-warning">{{ "%.2f"|format(total_expected_profit) }} ريال</h3>
                     <p class="text-muted">الربح المتوقع من المخزون</p>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <small class="text-muted">الهواتف: {{ "%.2f"|format(phone_selling_value - phone_purchase_value) }} ريال</small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">الأكسسوارات: {{ "%.2f"|format(accessory_selling_value - accessory_purchase_value) }} ريال</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
