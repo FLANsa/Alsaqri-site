@@ -14,21 +14,26 @@
                     <div class="sticker-preview mb-4">
                         <div class="sticker-content">
                             <div class="sticker-header">
-                                <strong>{{ phone.brand }}</strong><br>
-                                <small>{{ phone.model }}</small>
+                                <strong>الصيري للإتصالات</strong>
                             </div>
                             <div class="sticker-barcode">
                                 <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
                             </div>
                             <div class="sticker-info">
-                                <div class="sticker-row text-center">
-                                    <span class="sticker-value">{{ phone.phone_number }}</span>
+                                <div class="sticker-row">
+                                    <div class="sticker-field">
+                                        <div class="sticker-label">رقم الجهاز</div>
+                                        <div class="sticker-value">{{ phone.phone_number }}</div>
+                                    </div>
+                                    <div class="sticker-field">
+                                        <div class="sticker-label">نسبة البطارية</div>
+                                        <div class="sticker-value">{% if phone.condition == 'used' and phone.age %}{{ phone.age }}{% else %}100{% endif %}</div>
+                                    </div>
+                                    <div class="sticker-field">
+                                        <div class="sticker-label">الذاكرة</div>
+                                        <div class="sticker-value">{% if phone.phone_memory %}{{ phone.phone_memory }}{% else %}512{% endif %}</div>
+                                    </div>
                                 </div>
-                                {% if phone.condition == 'used' and phone.age %}
-                                <div class="sticker-row text-center">
-                                    <span class="sticker-value">{{ phone.age }}%</span>
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -94,24 +99,31 @@
 
 .sticker-info {
     font-size: 8px;
-    text-align: center;
     margin-top: 4px;
 }
 
 .sticker-row {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     margin-bottom: 1px;
+}
+
+.sticker-field {
+    flex: 1;
+    text-align: center;
 }
 
 .sticker-label {
     font-weight: bold;
-    color: #666;
+    color: #333;
+    font-size: 7px;
+    margin-bottom: 1px;
 }
 
 .sticker-value {
     color: #333;
-    text-align: center;
+    font-weight: bold;
+    font-size: 9px;
 }
 
 @media print {
@@ -131,16 +143,19 @@
     }
     .sticker-content {
         border: none;
-        padding: 0;
+        padding: 5px;
         max-width: none;
         background: white;
     }
     .sticker-header {
-        display: none;
+        font-size: 12px;
+        margin-bottom: 5px;
+        text-align: center;
+        font-weight: bold;
     }
     .sticker-barcode {
-        margin: 0;
-        padding: 0;
+        margin: 5px 0;
+        text-align: center;
     }
     .sticker-barcode img {
         max-width: 100%;
@@ -149,10 +164,28 @@
         margin: 0 auto;
     }
     .sticker-info {
-        display: none;
+        margin-top: 5px;
+        font-size: 6px;
     }
     .sticker-row {
-        display: none;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0;
+    }
+    .sticker-field {
+        flex: 1;
+        text-align: center;
+    }
+    .sticker-label {
+        font-weight: bold;
+        color: #333;
+        font-size: 5px;
+        margin-bottom: 1px;
+    }
+    .sticker-value {
+        color: #333;
+        font-weight: bold;
+        font-size: 7px;
     }
 }
 </style>
