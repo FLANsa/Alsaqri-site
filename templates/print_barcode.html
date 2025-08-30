@@ -14,16 +14,18 @@
             <!-- الملصق الحقيقي بالحجم النهائي -->
             <div class="sticker">
               
-              <!-- عمود الباركود (يسار بصريًا في RTL) -->
+              <!-- اسم الشركة في الأعلى -->
+              <div class="shop">الصقري للإتصالات</div>
+              
+              <!-- الباركود في الوسط -->
               <div class="sticker-barcode">
                 <img
                   src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}"
                   alt="Barcode">
               </div>
 
-              <!-- عمود الكارت الصغير -->
+              <!-- تفاصيل الجهاز في الأسفل -->
               <div class="sticker-card">
-                <div class="shop">الصقري للإتصالات</div>
                 <div class="rows">
                   <div class="row2">
                     <div class="label">رقم الجهاز</div>
@@ -77,66 +79,69 @@
   justify-content:center;
 }
 
-/* حجم الملصق الفعلي: اضبطه ليتطابق مع طابعة الملصقات لديك
-   7.0cm × 3.5cm قريب جدًا من صورة الـPDF */
+/* حجم الملصق الفعلي: عمودي مثل الصورة */
 .sticker{
-  width:7cm;
-  height:3.5cm;
+  width:5cm;
+  height:7cm;
   background:#fff;
   border:1px solid #ddd;
   box-sizing:border-box;
 
-  /* تخطيط عمودين: باركود كبير (65%) وكارت صغير (35%) */
-  display:grid;
-  grid-template-columns: 65% 35%;
-  gap:0.2cm;
-  padding:0.15cm;
-  align-items:center;
+  /* تخطيط عمودي: اسم الشركة، باركود، تفاصيل */
+  display:flex;
+  flex-direction:column;
+  padding:0.2cm;
+  gap:0.15cm;
 }
 
-/* الباركود: يملأ الارتفاع، بعرض مناسب دون تمدد أفقي زائد */
+/* اسم الشركة في الأعلى */
+.shop{
+  text-align:center;
+  font-weight:700;
+  font-size:4mm;
+  line-height:1.1;
+  margin-bottom:0.1cm;
+}
+
+/* الباركود في الوسط */
 .sticker-barcode{
-  height:100%;
+  flex:1;
   display:flex;
   align-items:center;
   justify-content:center;
+  margin:0.1cm 0;
 }
 .sticker-barcode img{
-  height:100%;
-  width:auto;           /* يحافظ على النسبة */
+  width:100%;
+  height:auto;
+  max-height:3cm;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   display:block;
 }
 
-/* بطاقة المعلومات الصغيرة على يمين الباركود */
+/* تفاصيل الجهاز في الأسفل */
 .sticker-card{
-  height:100%;
   border:1px solid #d9d9d9;
   border-radius:2px;
-  padding:0.12cm 0.12cm 0.1cm;
+  padding:0.1cm;
   display:flex;
   flex-direction:column;
-  justify-content:flex-start;
-  gap:0.08cm;
+  gap:0.05cm;
 }
 
-.shop{
-  text-align:center;
-  font-weight:700;
-  font-size:3.4mm;      /* ~9.6px */
-  line-height:1.1;
-  margin-bottom:0.06cm;
+.rows{ 
+  display:flex; 
+  flex-direction:column; 
+  gap:0.05cm; 
 }
-
-.rows{ display:flex; flex-direction:column; gap:0.06cm; }
 
 .row2{
   display:grid;
   grid-template-columns: 1fr 1fr;
-  gap:0.08cm;
+  gap:0.1cm;
   align-items:center;
-  font-size:2.8mm;      /* ~8px */
+  font-size:2.5mm;
   line-height:1.05;
 }
 .label{ color:#222; font-weight:600; text-align:right; }
@@ -153,7 +158,11 @@
   .card, .card-body, .sticker-preview{ border:none !important; background:#fff !important; padding:0 !important; }
 
   /* الملصق يبقى بالحجم السنتيمتري المحدد */
-  .sticker{ border:none; }
+  .sticker{ 
+    border:none; 
+    width:5cm;
+    height:7cm;
+  }
 
   /* اختياري: محاذاة الملصق أعلى يسار الصفحة لتسلسل الطباعة */
   html,body{ width:100%; }
