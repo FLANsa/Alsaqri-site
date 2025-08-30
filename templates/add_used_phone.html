@@ -242,13 +242,10 @@ function updateModelOptions() {
     
     if (selectedBrand && selectedBrand !== 'other' && brandsData[selectedBrand]) {
         // Add models for selected brand
-        brandsData[selectedBrand].forEach(phoneType => {
+        brandsData[selectedBrand].forEach(model => {
             const option = document.createElement('option');
-            option.value = phoneType.model;
-            option.textContent = phoneType.model;
-            if (phoneType.release_year) {
-                option.textContent += ` (${phoneType.release_year})`;
-            }
+            option.value = model;
+            option.textContent = model;
             modelSelect.appendChild(option);
         });
     }
