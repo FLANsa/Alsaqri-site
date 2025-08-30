@@ -10,6 +10,10 @@ from barcode.writer import ImageWriter
 from PIL import Image
 import argparse
 from werkzeug.security import generate_password_hash, check_password_hash
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.lib.pagesizes import A4
+from io import BytesIO
 
 # VAT Configuration for Saudi Arabia
 VAT_RATE = 0.15  # 15% VAT rate
@@ -549,6 +553,78 @@ def print_barcode(phone_number):
         flash('الهاتف غير موجود', 'error')
         return redirect(url_for('dashboard'))
     return render_template('print_barcode.html', phone=phone)
+
+@app.route('/download_barcode_pdf/<phone_number>')
+@login_required
+def download_barcode_pdf(phone_number):
+    """Download barcode as PDF with exact dimensions"""
+    phone = Phone.query.filter_by(phone_number=phone_number).first()
+    if not phone:
+        flash('الهاتف غير موجود', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Create PDF with exact sticker dimensions (6cm x 3cm)
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=(6*cm, 3*cm))
+    
+    # Set background to white
+    p.setFillColorRGB(1, 1, 1)
+    p.rect(0, 0, 6*cm, 3*cm, fill=1)
+    
+    # Company name at top
+    p.setFillColorRGB(0, 0, 0)
+    p.setFont("Helvetica-Bold", 8)
+    p.drawCentredString(3*cm, 2.6*cm, "الصقري للإتصالات")
+    
+    # Barcode in center
+    if phone.barcode_path and os.path.exists(phone.barcode_path):
+        # Load and resize barcode image
+        img = Image.open(phone.barcode_path)
+        # Resize to fit in center (4cm width, 1cm height)
+        img = img.resize((int(4*37.795276), int(1*37.795276)), Image.Resampling.LANCZOS)
+        
+        # Save resized image temporarily
+        temp_path = f"static/barcodes/temp_{phone_number}.png"
+        img.save(temp_path)
+        
+        # Add to PDF
+        p.drawImage(temp_path, 1*cm, 1.2*cm, width=4*cm, height=1*cm)
+        
+        # Clean up temp file
+        os.remove(temp_path)
+    
+    # Device details at bottom
+    p.setFont("Helvetica", 6)
+    
+    # Device number
+    p.drawString(0.5*cm, 0.8*cm, "رقم الجهاز:")
+    p.setFont("Helvetica-Bold", 6)
+    p.drawString(0.5*cm, 0.6*cm, phone.phone_number)
+    
+    # Battery percentage
+    p.setFont("Helvetica", 6)
+    battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
+    p.drawString(2.5*cm, 0.8*cm, "نسبة البطارية:")
+    p.setFont("Helvetica-Bold", 6)
+    p.drawString(2.5*cm, 0.6*cm, battery_value)
+    
+    # Memory
+    p.setFont("Helvetica", 6)
+    memory_value = phone.phone_memory if phone.phone_memory else "512"
+    p.drawString(4.5*cm, 0.8*cm, "الذاكرة:")
+    p.setFont("Helvetica-Bold", 6)
+    p.drawString(4.5*cm, 0.6*cm, memory_value)
+    
+    p.showPage()
+    p.save()
+    
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f'barcode_{phone_number}.pdf',
+        mimetype='application/pdf'
+    )
 
 def generate_unique_phone_number():
     # Get the highest existing phone number

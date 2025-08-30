@@ -59,6 +59,7 @@
 
           <div class="d-grid gap-2">
             <button onclick="window.print()" class="btn btn-primary">طباعة الملصق</button>
+            <a href="{{ url_for('download_barcode_pdf', phone_number=phone.phone_number) }}" class="btn btn-success">تحميل PDF</a>
             <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">العودة للوحة التحكم</a>
           </div>
 
