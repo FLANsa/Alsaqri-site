@@ -21,16 +21,14 @@
                                 <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
                             </div>
                             <div class="sticker-info">
-                                <div class="sticker-row">
-                                    <span class="sticker-label">رقم:</span>
+                                <div class="sticker-row text-center">
                                     <span class="sticker-value">{{ phone.phone_number }}</span>
                                 </div>
-                                                   {% if phone.condition == 'used' and phone.age %}
-                   <div class="sticker-row">
-                       <span class="sticker-label">عمر:</span>
-                       <span class="sticker-value">{{ phone.age }}%</span>
-                   </div>
-                   {% endif %}
+                                {% if phone.condition == 'used' and phone.age %}
+                                <div class="sticker-row text-center">
+                                    <span class="sticker-value">{{ phone.age }}%</span>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -40,10 +38,10 @@
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
                             <strong>الباركود يحتوي على:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>رقم الهاتف: {{ phone.phone_number }}</li>
+                            <ul class="mb-0 mt-2 text-center">
+                                <li>{{ phone.phone_number }}</li>
                                 {% if phone.condition == 'used' and phone.age %}
-                                <li>عمر البطارية: {{ phone.age }}%</li>
+                                <li>{{ phone.age }}%</li>
                                 {% endif %}
                             </ul>
                         </div>
