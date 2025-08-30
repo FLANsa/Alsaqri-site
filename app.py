@@ -523,11 +523,11 @@ def generate_barcode(phone_number, battery_age=None):
     filename = f"static/barcodes/{phone_number}"
     barcode_path = barcode_instance.save(filename, options)
     
-    # Convert the saved image to sticker size (8cm x 5cm - horizontal layout)
+    # Convert the saved image to sticker size (6cm x 3cm - compact layout)
     img = Image.open(barcode_path)
     # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(8.0 * 37.795276)   # 8cm width
-    height_px = int(5.0 * 37.795276)  # 5cm height
+    width_px = int(6.0 * 37.795276)   # 6cm width
+    height_px = int(3.0 * 37.795276)  # 3cm height
     img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
     img.save(barcode_path)
     
