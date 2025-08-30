@@ -13,27 +13,29 @@
                 <div class="card-body text-center">
                     <div class="sticker-preview mb-4">
                         <div class="sticker-content">
-                            <div class="sticker-header">
-                                <strong>الصقري للإتصالات</strong>
+                            <div class="sticker-left">
+                                <div class="sticker-header">
+                                    <strong>الصقري للإتصالات</strong>
+                                </div>
+                                <div class="sticker-info">
+                                    <div class="sticker-row">
+                                        <div class="sticker-field">
+                                            <div class="sticker-label">رقم الجهاز</div>
+                                            <div class="sticker-value">{{ phone.phone_number }}</div>
+                                        </div>
+                                        <div class="sticker-field">
+                                            <div class="sticker-label">نسبة البطارية</div>
+                                            <div class="sticker-value">{% if phone.condition == 'used' and phone.age %}{{ phone.age }}{% else %}100{% endif %}</div>
+                                        </div>
+                                        <div class="sticker-field">
+                                            <div class="sticker-label">الذاكرة</div>
+                                            <div class="sticker-value">{% if phone.phone_memory %}{{ phone.phone_memory }}{% else %}512{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="sticker-barcode">
                                 <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
-                            </div>
-                            <div class="sticker-info">
-                                <div class="sticker-row">
-                                    <div class="sticker-field">
-                                        <div class="sticker-label">رقم الجهاز</div>
-                                        <div class="sticker-value">{{ phone.phone_number }}</div>
-                                    </div>
-                                    <div class="sticker-field">
-                                        <div class="sticker-label">نسبة البطارية</div>
-                                        <div class="sticker-value">{% if phone.condition == 'used' and phone.age %}{{ phone.age }}{% else %}100{% endif %}</div>
-                                    </div>
-                                    <div class="sticker-field">
-                                        <div class="sticker-label">الذاكرة</div>
-                                        <div class="sticker-value">{% if phone.phone_memory %}{{ phone.phone_memory }}{% else %}512{% endif %}</div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -61,13 +63,22 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 8px;
-    max-width: 200px;
+    max-width: 500px;
     margin: 0 auto;
-    width: 2cm;
-    height: 5cm;
+    width: 5cm;
+    height: 2cm;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sticker-left {
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding-right: 8px;
 }
 
 .sticker-header {
@@ -80,11 +91,11 @@
 
 .sticker-barcode {
     text-align: center;
-    margin: 4px 0;
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-left: 8px;
 }
 
 .sticker-barcode img {
@@ -142,8 +153,15 @@
         padding: 2px;
         max-width: none;
         background: white;
-        width: 2cm;
-        height: 5cm;
+        width: 5cm;
+        height: 2cm;
+    }
+    .sticker-left {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding-right: 4px;
     }
     .sticker-header {
         font-size: 6px;
@@ -152,9 +170,12 @@
         font-weight: bold;
     }
     .sticker-barcode {
-        margin: 2px 0;
         text-align: center;
-        width: 100%;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-left: 4px;
     }
     .sticker-barcode img {
         width: 100%;
