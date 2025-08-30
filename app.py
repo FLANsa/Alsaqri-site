@@ -565,111 +565,117 @@ def download_barcode_pdf(phone_number):
         flash('الهاتف غير موجود', 'error')
         return redirect(url_for('dashboard'))
     
-    # Create complete sticker image first
-    def create_complete_sticker_image():
-        from PIL import Image, ImageDraw, ImageFont
-        
-        # Create image with exact dimensions (6cm x 3cm at 300 DPI)
-        width_px = int(6 * 118.11)  # 6cm at 300 DPI
-        height_px = int(3 * 118.11)  # 3cm at 300 DPI
-        
-        # Create white background
-        sticker_img = Image.new('RGB', (width_px, height_px), color='white')
-        draw = ImageDraw.Draw(sticker_img)
-        
-        # Try to load Arabic font
-        try:
-            font_paths = [
-                '/System/Library/Fonts/Arial.ttf',
-                '/System/Library/Fonts/Helvetica.ttc',
-                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-                'C:/Windows/Fonts/arial.ttf',
-            ]
+    try:
+        # Create complete sticker image first
+        def create_complete_sticker_image():
+            from PIL import Image, ImageDraw, ImageFont
             
-            arabic_font = None
-            for font_path in font_paths:
-                if os.path.exists(font_path):
-                    arabic_font = ImageFont.truetype(font_path, 24)
-                    break
+            # Create image with exact dimensions (6cm x 3cm at 300 DPI)
+            width_px = int(6 * 118.11)  # 6cm at 300 DPI
+            height_px = int(3 * 118.11)  # 3cm at 300 DPI
             
-            if arabic_font is None:
-                arabic_font = ImageFont.load_default()
+            # Create white background
+            sticker_img = Image.new('RGB', (width_px, height_px), color='white')
+            draw = ImageDraw.Draw(sticker_img)
+            
+            # Try to load Arabic font
+            try:
+                font_paths = [
+                    '/System/Library/Fonts/Arial.ttf',
+                    '/System/Library/Fonts/Helvetica.ttc',
+                    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                    'C:/Windows/Fonts/arial.ttf',
+                ]
                 
-        except:
-            arabic_font = ImageFont.load_default()
-        
-        # Company name at top
-        company_text = "الصقري للإتصالات"
-        bbox = draw.textbbox((0, 0), company_text, font=arabic_font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-        x = (width_px - text_width) // 2
-        y = height_px - 80  # Top area
-        draw.text((x, y), company_text, fill='black', font=arabic_font)
-        
-        # Barcode in center
-        if phone.barcode_path and os.path.exists(phone.barcode_path):
-            barcode_img = Image.open(phone.barcode_path)
-            # Resize barcode to fit center
-            barcode_width = int(4 * 118.11)  # 4cm
-            barcode_height = int(1 * 118.11)  # 1cm
-            barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
+                arabic_font = None
+                for font_path in font_paths:
+                    if os.path.exists(font_path):
+                        arabic_font = ImageFont.truetype(font_path, 24)
+                        break
+                
+                if arabic_font is None:
+                    arabic_font = ImageFont.load_default()
+                    
+            except:
+                arabic_font = ImageFont.load_default()
             
-            # Paste barcode in center
-            barcode_x = (width_px - barcode_width) // 2
-            barcode_y = (height_px - barcode_height) // 2
-            sticker_img.paste(barcode_img, (barcode_x, barcode_y))
+            # Company name at top
+            company_text = "الصقري للإتصالات"
+            bbox = draw.textbbox((0, 0), company_text, font=arabic_font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            x = (width_px - text_width) // 2
+            y = height_px - 80  # Top area
+            draw.text((x, y), company_text, fill='black', font=arabic_font)
+            
+            # Barcode in center
+            if phone.barcode_path and os.path.exists(phone.barcode_path):
+                barcode_img = Image.open(phone.barcode_path)
+                # Resize barcode to fit center
+                barcode_width = int(4 * 118.11)  # 4cm
+                barcode_height = int(1 * 118.11)  # 1cm
+                barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
+                
+                # Paste barcode in center
+                barcode_x = (width_px - barcode_width) // 2
+                barcode_y = (height_px - barcode_height) // 2
+                sticker_img.paste(barcode_img, (barcode_x, barcode_y))
+            
+            # Device details at bottom
+            detail_font = ImageFont.load_default()
+            
+            # Device number
+            device_label = "رقم الجهاز:"
+            device_value = phone.phone_number
+            draw.text((20, 20), device_label, fill='black', font=detail_font)
+            draw.text((20, 40), device_value, fill='black', font=detail_font)
+            
+            # Battery percentage
+            battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
+            battery_label = "نسبة البطارية:"
+            draw.text((width_px//3, 20), battery_label, fill='black', font=detail_font)
+            draw.text((width_px//3, 40), battery_value, fill='black', font=detail_font)
+            
+            # Memory
+            memory_value = phone.phone_memory if phone.phone_memory else "512"
+            memory_label = "الذاكرة:"
+            draw.text((2*width_px//3, 20), memory_label, fill='black', font=detail_font)
+            draw.text((2*width_px//3, 40), memory_value, fill='black', font=detail_font)
+            
+            return sticker_img
         
-        # Device details at bottom
-        detail_font = ImageFont.truetype(font_paths[0], 16) if os.path.exists(font_paths[0]) else ImageFont.load_default()
+        # Create the complete sticker image
+        sticker_img = create_complete_sticker_image()
         
-        # Device number
-        device_label = "رقم الجهاز:"
-        device_value = phone.phone_number
-        draw.text((20, 20), device_label, fill='black', font=detail_font)
-        draw.text((20, 40), device_value, fill='black', font=detail_font)
+        # Save sticker image temporarily
+        sticker_temp_path = f"static/barcodes/sticker_{phone_number}.png"
+        sticker_img.save(sticker_temp_path, 'PNG')
         
-        # Battery percentage
-        battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-        battery_label = "نسبة البطارية:"
-        draw.text((width_px//3, 20), battery_label, fill='black', font=detail_font)
-        draw.text((width_px//3, 40), battery_value, fill='black', font=detail_font)
+        # Create PDF with the sticker image
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=(6*cm, 3*cm))
         
-        # Memory
-        memory_value = phone.phone_memory if phone.phone_memory else "512"
-        memory_label = "الذاكرة:"
-        draw.text((2*width_px//3, 20), memory_label, fill='black', font=detail_font)
-        draw.text((2*width_px//3, 40), memory_value, fill='black', font=detail_font)
+        # Add the complete sticker image to PDF
+        p.drawImage(sticker_temp_path, 0, 0, width=6*cm, height=3*cm)
         
-        return sticker_img
-    
-    # Create the complete sticker image
-    sticker_img = create_complete_sticker_image()
-    
-    # Save sticker image temporarily
-    sticker_temp_path = f"static/barcodes/sticker_{phone_number}.png"
-    sticker_img.save(sticker_temp_path, 'PNG')
-    
-    # Create PDF with the sticker image
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=(6*cm, 3*cm))
-    
-    # Add the complete sticker image to PDF
-    p.drawImage(sticker_temp_path, 0, 0, width=6*cm, height=3*cm)
-    
-    p.showPage()
-    p.save()
-    
-    # Clean up temp file
-    os.remove(sticker_temp_path)
-    
-    buffer.seek(0)
-    return send_file(
-        buffer,
-        as_attachment=True,
-        download_name=f'barcode_{phone_number}.pdf',
-        mimetype='application/pdf'
-    )
+        p.showPage()
+        p.save()
+        
+        # Clean up temp file
+        if os.path.exists(sticker_temp_path):
+            os.remove(sticker_temp_path)
+        
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'barcode_{phone_number}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        flash(f'خطأ في إنشاء PDF: {str(e)}', 'error')
+        return redirect(url_for('print_barcode', phone_number=phone_number))
 
 def generate_unique_phone_number():
     # Get the highest existing phone number
