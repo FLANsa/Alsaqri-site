@@ -66,6 +66,12 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String(20), default='user')  # admin, user, limited
+    can_access_dashboard = db.Column(db.Boolean, default=True)
+    can_add_phones = db.Column(db.Boolean, default=True)
+    can_add_accessories = db.Column(db.Boolean, default=True)
+    can_create_sales = db.Column(db.Boolean, default=True)
+    can_view_reports = db.Column(db.Boolean, default=True)
 
 class Phone(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -210,17 +216,60 @@ def load_user(user_id):
 def create_admin_user():
     admin = User.query.filter_by(username='admin').first()
     if not admin:
-        admin = User(username='admin', password=generate_password_hash('admin123'), is_admin=True)
+        admin = User(
+            username='admin', 
+            password=generate_password_hash('admin123'), 
+            is_admin=True,
+            role='admin',
+            can_access_dashboard=True,
+            can_add_phones=True,
+            can_add_accessories=True,
+            can_create_sales=True,
+            can_view_reports=True
+        )
         db.session.add(admin)
         db.session.commit()
         print("Admin user created successfully!")
+
+# Create limited user if not exists
+def create_limited_user():
+    limited_user = User.query.filter_by(username='limited').first()
+    if not limited_user:
+        limited_user = User(
+            username='limited', 
+            password=generate_password_hash('limited123'), 
+            is_admin=False,
+            role='limited',
+            can_access_dashboard=False,
+            can_add_phones=True,
+            can_add_accessories=True,
+            can_create_sales=True,
+            can_view_reports=False
+        )
+        db.session.add(limited_user)
+        db.session.commit()
+        print("Limited user created successfully!")
 
 
 
 # Routes
 @app.route('/')
 def index():
+    if current_user.is_authenticated:
+        if current_user.can_access_dashboard:
+            return redirect(url_for('dashboard'))
+        else:
+            return redirect(url_for('limited_dashboard'))
     return render_template('index.html')
+
+@app.route('/limited_dashboard')
+@login_required
+def limited_dashboard():
+    """Dashboard for limited users without full access"""
+    if current_user.can_access_dashboard:
+        return redirect(url_for('dashboard'))
+    
+    return render_template('limited_dashboard.html')
 
 @app.route('/favicon.ico')
 def favicon():
@@ -251,6 +300,10 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Check if user has dashboard access
+    if not current_user.can_access_dashboard:
+        flash('ليس لديك صلاحية للوصول إلى لوحة التحكم', 'error')
+        return redirect(url_for('index'))
     phones = Phone.query.all()
     accessories = Accessory.query.all()
     
@@ -1409,6 +1462,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create tables if they do not exist
         create_admin_user()  # Create admin user on startup if missing
+        create_limited_user()  # Create limited user on startup if missing
     
     # Check if running in production
     if os.environ.get('PORT'):
