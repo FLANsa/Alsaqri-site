@@ -255,12 +255,16 @@ def create_limited_user():
 # Routes
 @app.route('/')
 def index():
-    if current_user.is_authenticated:
-        if current_user.can_access_dashboard:
-            return redirect(url_for('dashboard'))
-        else:
-            return redirect(url_for('limited_dashboard'))
-    return render_template('index.html')
+    try:
+        if current_user.is_authenticated:
+            if current_user.can_access_dashboard:
+                return redirect(url_for('dashboard'))
+            else:
+                return redirect(url_for('limited_dashboard'))
+        return render_template('index.html')
+    except Exception as e:
+        # If there's a database error, show a simple page
+        return render_template('index.html')
 
 @app.route('/limited_dashboard')
 @login_required
@@ -1461,8 +1465,26 @@ def get_accessory_categories_ajax():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create tables if they do not exist
-        create_admin_user()  # Create admin user on startup if missing
-        create_limited_user()  # Create limited user on startup if missing
+        
+        # Try to create users normally first
+        try:
+            create_admin_user()  # Create admin user on startup if missing
+            create_limited_user()  # Create limited user on startup if missing
+        except Exception as e:
+            print(f"Error creating users: {e}")
+            print("Running database migration...")
+            # If that fails, run migration
+            try:
+                from migrate_db import migrate_database
+                migrate_database()
+            except Exception as migration_error:
+                print(f"Migration failed: {migration_error}")
+                # Last resort: recreate everything
+                print("Recreating database...")
+                db.drop_all()
+                db.create_all()
+                create_admin_user()
+                create_limited_user()
     
     # Check if running in production
     if os.environ.get('PORT'):
