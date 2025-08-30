@@ -707,7 +707,7 @@ def add_new_phone():
             db.session.commit()
             
             flash('تمت إضافة الهاتف الجديد بنجاح', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('print_barcode', phone_number=phone_number))
         except ValueError:
             db.session.rollback()
             flash('خطأ في إدخال البيانات. يرجى التحقق من القيم المدخلة', 'error')
@@ -824,7 +824,7 @@ def add_used_phone():
             db.session.commit()
             
             flash('تمت إضافة الهاتف المستعمل بنجاح', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('print_barcode', phone_number=phone_number))
         except ValueError:
             db.session.rollback()
             flash('خطأ في إدخال البيانات. يرجى التحقق من القيم المدخلة', 'error')
