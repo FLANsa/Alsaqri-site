@@ -599,21 +599,21 @@ def download_barcode_pdf(phone_number):
             except:
                 arabic_font = ImageFont.load_default()
             
-            # Company name at top
-            company_text = "ALSAQRI COMMUNICATIONS"
+            # Company name at top - مطابق للصفحة
+            company_text = "الصقري للإتصالات"
             bbox = draw.textbbox((0, 0), company_text, font=arabic_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
             x = (width_px - text_width) // 2
-            y = height_px - 80  # Top area
+            y = 20  # Top area like in page
             draw.text((x, y), company_text, fill='black', font=arabic_font)
             
-            # Barcode in center
+            # Barcode in center - مطابق للصفحة
             if phone.barcode_path and os.path.exists(phone.barcode_path):
                 barcode_img = Image.open(phone.barcode_path)
-                # Resize barcode to fit center
-                barcode_width = int(4 * 118.11)  # 4cm
-                barcode_height = int(1 * 118.11)  # 1cm
+                # Resize barcode to 80% width like in page
+                barcode_width = int(width_px * 0.8)  # 80% of sticker width
+                barcode_height = int(1 * 118.11)  # 1cm height
                 barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
                 
                 # Paste barcode in center
@@ -621,26 +621,30 @@ def download_barcode_pdf(phone_number):
                 barcode_y = (height_px - barcode_height) // 2
                 sticker_img.paste(barcode_img, (barcode_x, barcode_y))
             
-            # Device details at bottom
+            # Device details at bottom - مطابق للصفحة
             detail_font = ImageFont.load_default()
             
-            # Device number
-            device_label = "Device:"
+            # Calculate positions for 3 columns like in page
+            col_width = width_px // 3
+            start_y = height_px - 60
+            
+            # Device number - Column 1
+            device_label = "رقم الجهاز"
             device_value = phone.phone_number
-            draw.text((20, 20), device_label, fill='black', font=detail_font)
-            draw.text((20, 40), device_value, fill='black', font=detail_font)
+            draw.text((col_width//2 - 20, start_y), device_label, fill='black', font=detail_font)
+            draw.text((col_width//2 - 20, start_y + 20), device_value, fill='black', font=detail_font)
             
-            # Battery percentage
+            # Battery percentage - Column 2
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-            battery_label = "Battery:"
-            draw.text((width_px//3, 20), battery_label, fill='black', font=detail_font)
-            draw.text((width_px//3, 40), battery_value, fill='black', font=detail_font)
+            battery_label = "نسبة البطارية"
+            draw.text((col_width + col_width//2 - 20, start_y), battery_label, fill='black', font=detail_font)
+            draw.text((col_width + col_width//2 - 20, start_y + 20), battery_value, fill='black', font=detail_font)
             
-            # Memory
+            # Memory - Column 3
             memory_value = phone.phone_memory if phone.phone_memory else "512"
-            memory_label = "Memory:"
-            draw.text((2*width_px//3, 20), memory_label, fill='black', font=detail_font)
-            draw.text((2*width_px//3, 40), memory_value, fill='black', font=detail_font)
+            memory_label = "الذاكرة"
+            draw.text((2*col_width + col_width//2 - 20, start_y), memory_label, fill='black', font=detail_font)
+            draw.text((2*col_width + col_width//2 - 20, start_y + 20), memory_value, fill='black', font=detail_font)
             
             return sticker_img
         
