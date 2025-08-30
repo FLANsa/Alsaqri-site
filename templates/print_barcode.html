@@ -1,234 +1,162 @@
 {% extends "base.html" %}
-
 {% block title %}طباعة الباركود{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="text-center">طباعة باركود الهاتف</h4>
-                </div>
-                <div class="card-body text-center">
-                    <div class="sticker-preview mb-4">
-                        <div class="sticker-content">
-                            <div class="sticker-left">
-                                <div class="sticker-header">
-                                    <strong>الصقري للإتصالات</strong>
-                                </div>
-                                <div class="sticker-info">
-                                    <div class="sticker-row">
-                                        <div class="sticker-field">
-                                            <div class="sticker-label">رقم الجهاز</div>
-                                            <div class="sticker-value">{{ phone.phone_number }}</div>
-                                        </div>
-                                        <div class="sticker-field">
-                                            <div class="sticker-label">نسبة البطارية</div>
-                                            <div class="sticker-value">{% if phone.condition == 'used' and phone.age %}{{ phone.age }}{% else %}100{% endif %}</div>
-                                        </div>
-                                        <div class="sticker-field">
-                                            <div class="sticker-label">الذاكرة</div>
-                                            <div class="sticker-value">{% if phone.phone_memory %}{{ phone.phone_memory }}{% else %}512{% endif %}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="sticker-barcode">
-                                <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
-                            </div>
-                        </div>
+<div class="container mt-4" dir="rtl">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-header text-center"><h4 class="m-0">طباعة باركود الهاتف</h4></div>
+        <div class="card-body text-center">
+          
+          <!-- معاينة ضمن إطار منقط -->
+          <div class="sticker-preview mb-4">
+            <!-- الملصق الحقيقي بالحجم النهائي -->
+            <div class="sticker">
+              
+              <!-- عمود الباركود (يسار بصريًا في RTL) -->
+              <div class="sticker-barcode">
+                <img
+                  src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}"
+                  alt="Barcode">
+              </div>
+
+              <!-- عمود الكارت الصغير -->
+              <div class="sticker-card">
+                <div class="shop">الصقري للإتصالات</div>
+                <div class="rows">
+                  <div class="row2">
+                    <div class="label">رقم الجهاز</div>
+                    <div class="value">{{ phone.phone_number }}</div>
+                  </div>
+                  <div class="row2">
+                    <div class="label">نسبة البطارية</div>
+                    <div class="value">
+                      {% if phone.condition == 'used' and phone.age %}
+                        {{ phone.age }}
+                      {% else %}
+                        100
+                      {% endif %}
                     </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button onclick="window.print()" class="btn btn-primary">طباعة الملصق</button>
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">العودة للوحة التحكم</a>
+                  </div>
+                  <div class="row2">
+                    <div class="label">الذاكرة</div>
+                    <div class="value">
+                      {% if phone.phone_memory %}
+                        {{ phone.phone_memory }}
+                      {% else %}
+                        512
+                      {% endif %}
                     </div>
+                  </div>
                 </div>
+              </div>
+
             </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button onclick="window.print()" class="btn btn-primary">طباعة الملصق</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">العودة للوحة التحكم</a>
+          </div>
+
         </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <style>
-.sticker-preview {
-    border: 2px dashed #ccc;
-    padding: 20px;
-    background: #f9f9f9;
-    border-radius: 8px;
+/* ============ شاشة ============ */
+.sticker-preview{
+  border:2px dashed #cfcfcf;
+  padding:20px;
+  background:#f9f9f9;
+  border-radius:10px;
+  display:flex;
+  justify-content:center;
 }
 
-.sticker-content {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 6px;
-    max-width: 500px;
-    margin: 0 auto;
-    width: 5cm;
-    height: 2cm;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    box-sizing: border-box;
+/* حجم الملصق الفعلي: اضبطه ليتطابق مع طابعة الملصقات لديك
+   7.0cm × 3.5cm قريب جدًا من صورة الـPDF */
+.sticker{
+  width:7cm;
+  height:3.5cm;
+  background:#fff;
+  border:1px solid #ddd;
+  box-sizing:border-box;
+
+  /* تخطيط عمودين: باركود كبير (65%) وكارت صغير (35%) */
+  display:grid;
+  grid-template-columns: 65% 35%;
+  gap:0.2cm;
+  padding:0.15cm;
+  align-items:center;
 }
 
-.sticker-left {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding-right: 6px;
-    height: 100%;
+/* الباركود: يملأ الارتفاع، بعرض مناسب دون تمدد أفقي زائد */
+.sticker-barcode{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.sticker-barcode img{
+  height:100%;
+  width:auto;           /* يحافظ على النسبة */
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  display:block;
 }
 
-.sticker-header {
-    text-align: center;
-    font-size: 7px;
-    margin-bottom: 3px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 1px;
-    font-weight: bold;
+/* بطاقة المعلومات الصغيرة على يمين الباركود */
+.sticker-card{
+  height:100%;
+  border:1px solid #d9d9d9;
+  border-radius:2px;
+  padding:0.12cm 0.12cm 0.1cm;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:0.08cm;
 }
 
-.sticker-barcode {
-    text-align: center;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 6px;
-    height: 100%;
+.shop{
+  text-align:center;
+  font-weight:700;
+  font-size:3.4mm;      /* ~9.6px */
+  line-height:1.1;
+  margin-bottom:0.06cm;
 }
 
-.sticker-barcode img {
-    width: 100%;
-    height: auto;
-    max-width: none;
-}
+.rows{ display:flex; flex-direction:column; gap:0.06cm; }
 
-.sticker-info {
-    font-size: 5px;
-    margin-top: 2px;
-    flex: 1;
+.row2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:0.08cm;
+  align-items:center;
+  font-size:2.8mm;      /* ~8px */
+  line-height:1.05;
 }
+.label{ color:#222; font-weight:600; text-align:right; }
+.value{ color:#000; font-weight:700; text-align:left; }
 
-.sticker-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0;
-    height: 100%;
-    align-items: center;
+/* ============ طباعة ============ */
+@page{
+  size: auto;           /* تستخدم الطابعة حجم الورقة/الملصق */
+  margin: 5mm;          /* عدّلها حسب بكرات الملصقات لديك */
 }
+@media print{
+  body{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .navbar, .btn, .card-header, .container > .row:first-child .col-12 .alert { display:none !important; }
+  .card, .card-body, .sticker-preview{ border:none !important; background:#fff !important; padding:0 !important; }
 
-.sticker-field {
-    flex: 1;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
+  /* الملصق يبقى بالحجم السنتيمتري المحدد */
+  .sticker{ border:none; }
 
-.sticker-label {
-    font-weight: bold;
-    color: #333;
-    font-size: 4px;
-    margin-bottom: 0;
-}
-
-.sticker-value {
-    color: #333;
-    font-weight: bold;
-    font-size: 6px;
-}
-
-@media print {
-    .btn, .card-title, .alert {
-        display: none;
-    }
-    .card {
-        border: none;
-    }
-    .card-body {
-        padding: 0;
-    }
-    .sticker-preview {
-        border: none;
-        background: white;
-        padding: 0;
-    }
-    .sticker-content {
-        border: none;
-        padding: 1px;
-        max-width: none;
-        background: white;
-        width: 5cm;
-        height: 2cm;
-        box-sizing: border-box;
-    }
-    .sticker-left {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding-right: 2px;
-        height: 100%;
-    }
-    .sticker-header {
-        font-size: 5px;
-        margin-bottom: 1px;
-        text-align: center;
-        font-weight: bold;
-    }
-    .sticker-barcode {
-        text-align: center;
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-left: 2px;
-        height: 100%;
-    }
-    .sticker-barcode img {
-        width: 100%;
-        height: auto;
-        max-width: none;
-        display: block;
-        margin: 0 auto;
-    }
-    .sticker-info {
-        margin-top: 1px;
-        font-size: 3px;
-        flex: 1;
-    }
-    .sticker-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0;
-        height: 100%;
-        align-items: center;
-    }
-    .sticker-field {
-        flex: 1;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-    .sticker-label {
-        font-weight: bold;
-        color: #333;
-        font-size: 2px;
-        margin-bottom: 0;
-    }
-    .sticker-value {
-        color: #333;
-        font-weight: bold;
-        font-size: 4px;
-    }
+  /* اختياري: محاذاة الملصق أعلى يسار الصفحة لتسلسل الطباعة */
+  html,body{ width:100%; }
 }
 </style>
 {% endblock %}
