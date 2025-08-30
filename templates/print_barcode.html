@@ -14,7 +14,7 @@
                     <div class="sticker-preview mb-4">
                         <div class="sticker-content">
                             <div class="sticker-header">
-                                <strong>الصيري للإتصالات</strong>
+                                <strong>الصقري</strong>
                             </div>
                             <div class="sticker-barcode">
                                 <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
@@ -90,11 +90,13 @@
 .sticker-barcode {
     text-align: center;
     margin-bottom: 6px;
+    width: 100%;
 }
 
 .sticker-barcode img {
-    max-width: 100%;
+    width: 100%;
     height: auto;
+    max-width: none;
 }
 
 .sticker-info {
@@ -156,10 +158,12 @@
     .sticker-barcode {
         margin: 5px 0;
         text-align: center;
+        width: 100%;
     }
     .sticker-barcode img {
-        max-width: 100%;
+        width: 100%;
         height: auto;
+        max-width: none;
         display: block;
         margin: 0 auto;
     }
