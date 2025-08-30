@@ -619,18 +619,18 @@ def add_new_phone():
         try:
             brand = request.form.get('brand')
             model = request.form.get('model')
-            purchase_price = float(request.form.get('purchase_price'))  # Price without VAT
-            selling_price = float(request.form.get('selling_price'))    # Price without VAT
+            purchase_price_with_vat = float(request.form.get('purchase_price'))  # Input already includes VAT
+            selling_price_with_vat = float(request.form.get('selling_price'))    # Input already includes VAT
             serial_number = request.form.get('serial_number')
             warranty = int(request.form.get('warranty'))
             
-            # Calculate VAT amounts
-            purchase_vat = calculate_vat(purchase_price)
-            selling_vat = calculate_vat(selling_price)
+            # Calculate base prices without VAT
+            purchase_price = calculate_price_without_vat(purchase_price_with_vat)
+            selling_price = calculate_price_without_vat(selling_price_with_vat)
             
-            # Calculate prices with VAT
-            purchase_price_with_vat = calculate_price_with_vat(purchase_price)
-            selling_price_with_vat = calculate_price_with_vat(selling_price)
+            # Calculate VAT amounts
+            purchase_vat = purchase_price_with_vat - purchase_price
+            selling_vat = selling_price_with_vat - selling_price
             description = request.form.get('description')
             barcode_input = request.form.get('barcode_input')
             
@@ -737,19 +737,19 @@ def add_used_phone():
         try:
             brand = request.form.get('brand')
             model = request.form.get('model')
-            purchase_price = float(request.form.get('purchase_price'))  # Price without VAT
-            selling_price = float(request.form.get('selling_price'))    # Price without VAT
+            purchase_price_with_vat = float(request.form.get('purchase_price'))  # Input already includes VAT
+            selling_price_with_vat = float(request.form.get('selling_price'))    # Input already includes VAT
             serial_number = request.form.get('serial_number')
             phone_condition = request.form.get('phone_condition')
             age = int(request.form.get('age'))
             
-            # Calculate VAT amounts
-            purchase_vat = calculate_vat(purchase_price)
-            selling_vat = calculate_vat(selling_price)
+            # Calculate base prices without VAT
+            purchase_price = calculate_price_without_vat(purchase_price_with_vat)
+            selling_price = calculate_price_without_vat(selling_price_with_vat)
             
-            # Calculate prices with VAT
-            purchase_price_with_vat = calculate_price_with_vat(purchase_price)
-            selling_price_with_vat = calculate_price_with_vat(selling_price)
+            # Calculate VAT amounts
+            purchase_vat = purchase_price_with_vat - purchase_price
+            selling_vat = selling_price_with_vat - selling_price
             description = request.form.get('description')
             barcode_input = request.form.get('barcode_input')
             

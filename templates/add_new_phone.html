@@ -48,30 +48,30 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="purchase_price" class="form-label">سعر الشراء (بدون ضريبة)</label>
+                                    <label for="purchase_price" class="form-label">سعر الشراء (مع الضريبة)</label>
                                     <input type="number" class="form-control" id="purchase_price" name="purchase_price" step="0.01" required>
-                                    <small class="form-text text-muted">سيتم إضافة 15% ضريبة القيمة المضافة تلقائياً</small>
+                                    <small class="form-text text-muted">أدخل السعر شامل الضريبة</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="selling_price" class="form-label">سعر البيع (بدون ضريبة)</label>
+                                    <label for="selling_price" class="form-label">سعر البيع (مع الضريبة)</label>
                                     <input type="number" class="form-control" id="selling_price" name="selling_price" step="0.01" required>
-                                    <small class="form-text text-muted">سيتم إضافة 15% ضريبة القيمة المضافة تلقائياً</small>
+                                    <small class="form-text text-muted">أدخل السعر شامل الضريبة</small>
                                 </div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">سعر الشراء مع الضريبة</label>
-                                    <input type="text" class="form-control" id="purchase_price_with_vat" readonly>
+                                    <label class="form-label">سعر الشراء بدون الضريبة</label>
+                                    <input type="text" class="form-control" id="purchase_price_without_vat" readonly>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">سعر البيع مع الضريبة</label>
-                                    <input type="text" class="form-control" id="selling_price_with_vat" readonly>
+                                    <label class="form-label">سعر البيع بدون الضريبة</label>
+                                    <input type="text" class="form-control" id="selling_price_without_vat" readonly>
                                 </div>
                             </div>
                         </div>
@@ -179,15 +179,19 @@ function calculatePriceWithVAT(price) {
     return price * 1.15; // Price + 15% VAT
 }
 
+function calculatePriceWithoutVAT(priceWithVAT) {
+    return priceWithVAT / 1.15; // Remove VAT from price
+}
+
 function updateVATCalculations() {
-    const purchasePrice = parseFloat(document.getElementById('purchase_price').value) || 0;
-    const sellingPrice = parseFloat(document.getElementById('selling_price').value) || 0;
+    const purchasePriceWithVAT = parseFloat(document.getElementById('purchase_price').value) || 0;
+    const sellingPriceWithVAT = parseFloat(document.getElementById('selling_price').value) || 0;
     
-    const purchasePriceWithVAT = calculatePriceWithVAT(purchasePrice);
-    const sellingPriceWithVAT = calculatePriceWithVAT(sellingPrice);
+    const purchasePriceWithoutVAT = calculatePriceWithoutVAT(purchasePriceWithVAT);
+    const sellingPriceWithoutVAT = calculatePriceWithoutVAT(sellingPriceWithVAT);
     
-    document.getElementById('purchase_price_with_vat').value = purchasePriceWithVAT.toFixed(2) + ' ريال';
-    document.getElementById('selling_price_with_vat').value = sellingPriceWithVAT.toFixed(2) + ' ريال';
+    document.getElementById('purchase_price_without_vat').value = purchasePriceWithoutVAT.toFixed(2) + ' ريال';
+    document.getElementById('selling_price_without_vat').value = sellingPriceWithoutVAT.toFixed(2) + ' ريال';
 }
 
 // Add event listeners for price inputs
