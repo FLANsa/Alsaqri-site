@@ -507,14 +507,14 @@ def generate_barcode(phone_number, battery_age=None, customer_phone=None, custom
     barcode_class = barcode.get_barcode_class('code128')
     barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
     
-    # Set custom options for the barcode (wider for better scanning)
+    # Set custom options for the barcode (optimized for XPrinter XP-470B thermal printer)
     options = {
-        'module_width': 0.2,   # Width of each bar (wider for better scanning)
-        'module_height': 8,    # Height of the barcode
-        'font_size': 6,        # Font size for the number
-        'text_distance': 0.5,  # Distance between barcode and text
-        'quiet_zone': 0.5,     # Quiet zone around the barcode
-        'dpi': 300            # DPI for better quality
+        'module_width': 0.3,   # Width of each bar (optimal for thermal printing)
+        'module_height': 12,   # Height of the barcode (good for thermal printing)
+        'font_size': 8,        # Font size for the number (readable on thermal)
+        'text_distance': 1,    # Distance between barcode and text
+        'quiet_zone': 1,       # Quiet zone around the barcode
+        'dpi': 203            # DPI optimized for thermal printers
     }
     
     # Create barcodes directory if it doesn't exist
@@ -525,11 +525,11 @@ def generate_barcode(phone_number, battery_age=None, customer_phone=None, custom
     filename = f"static/barcodes/{phone_number}"
     barcode_path = barcode_instance.save(filename, options)
     
-    # Convert the saved image to wider sticker size (3.5cm x 1.5cm)
+    # Convert the saved image to thermal printer optimized size (4cm x 2cm)
     img = Image.open(barcode_path)
     # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(3.5 * 37.795276)  # 3.5cm width (wider)
-    height_px = int(1.5 * 37.795276) # 1.5cm height
+    width_px = int(4.0 * 37.795276)  # 4cm width (optimal for thermal printing)
+    height_px = int(2.0 * 37.795276) # 2cm height (optimal for thermal printing)
     img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
     img.save(barcode_path)
     
