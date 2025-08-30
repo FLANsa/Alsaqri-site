@@ -788,6 +788,7 @@ def add_used_phone():
             
             # Customer information fields
             customer_name = request.form.get('customer_name')
+            customer_phone = request.form.get('customer_phone')
             customer_id = request.form.get('customer_id')
             phone_color = request.form.get('phone_color')
             phone_memory = request.form.get('phone_memory')
