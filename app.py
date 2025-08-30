@@ -37,8 +37,17 @@ def generate_invoice_number():
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///phone_shop.db'
+
+# Production configuration
+if os.environ.get('DATABASE_URL'):
+    # For production (Render, Railway, Heroku)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+else:
+    # For development
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///phone_shop.db'
+    app.config['SECRET_KEY'] = 'your-secret-key-here'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -843,7 +852,7 @@ def create_sale_page():
             'brand': phone.brand,
             'model': phone.model,
             'serial_number': phone.serial_number,
-            'selling_price': phone.selling_price,
+            'selling_price': phone.selling_price_with_vat,  # Use price with VAT
             'description': phone.description or ''
         })
     
@@ -855,7 +864,7 @@ def create_sale_page():
             'name': accessory.name,
             'category': accessory.category,
             'description': accessory.description or '',
-            'selling_price': accessory.selling_price,
+            'selling_price': accessory.selling_price_with_vat,  # Use price with VAT
             'quantity_in_stock': accessory.quantity_in_stock
         })
     
@@ -879,10 +888,11 @@ def create_sale():
             notes=data['notes']
         )
         
-        # Calculate totals
-        subtotal = sum(item['totalPrice'] for item in data['items'])
-        vat_amount = subtotal * 0.15
-        total_amount = subtotal + vat_amount
+        # Calculate totals - prices already include VAT
+        total_amount = sum(item['totalPrice'] for item in data['items'])
+        # Calculate VAT amount from total (since prices include VAT)
+        subtotal = total_amount / (1 + VAT_RATE)  # Remove VAT to get subtotal
+        vat_amount = total_amount - subtotal
         
         sale.subtotal = subtotal
         sale.vat_amount = vat_amount
@@ -966,19 +976,19 @@ def add_accessory():
             name = request.form.get('name')
             category = request.form.get('category')
             description = request.form.get('description')
-            purchase_price = float(request.form.get('purchase_price'))
-            selling_price = float(request.form.get('selling_price'))
+            purchase_price_with_vat = float(request.form.get('purchase_price'))  # Input already includes VAT
+            selling_price_with_vat = float(request.form.get('selling_price'))    # Input already includes VAT
             quantity = int(request.form.get('quantity', 0))
             supplier = request.form.get('supplier')
             notes = request.form.get('notes')
             
-            # Calculate VAT amounts
-            purchase_vat = calculate_vat(purchase_price)
-            selling_vat = calculate_vat(selling_price)
+            # Calculate base prices without VAT
+            purchase_price = calculate_price_without_vat(purchase_price_with_vat)
+            selling_price = calculate_price_without_vat(selling_price_with_vat)
             
-            # Calculate prices with VAT
-            purchase_price_with_vat = calculate_price_with_vat(purchase_price)
-            selling_price_with_vat = calculate_price_with_vat(selling_price)
+            # Calculate VAT amounts
+            purchase_vat = purchase_price_with_vat - purchase_price
+            selling_vat = selling_price_with_vat - selling_price
             
             accessory = Accessory(
                 name=name,
@@ -1022,19 +1032,19 @@ def edit_accessory(accessory_id):
             accessory.name = request.form.get('name')
             accessory.category = request.form.get('category')
             accessory.description = request.form.get('description')
-            accessory.purchase_price = float(request.form.get('purchase_price'))
-            accessory.selling_price = float(request.form.get('selling_price'))
+            purchase_price_with_vat = float(request.form.get('purchase_price'))  # Input already includes VAT
+            selling_price_with_vat = float(request.form.get('selling_price'))    # Input already includes VAT
             accessory.quantity_in_stock = int(request.form.get('quantity', 0))
             accessory.supplier = request.form.get('supplier')
             accessory.notes = request.form.get('notes')
             
-            # Recalculate VAT amounts
-            purchase_vat = calculate_vat(accessory.purchase_price)
-            selling_vat = calculate_vat(accessory.selling_price)
+            # Calculate base prices without VAT
+            accessory.purchase_price = calculate_price_without_vat(purchase_price_with_vat)
+            accessory.selling_price = calculate_price_without_vat(selling_price_with_vat)
             
-            # Recalculate prices with VAT
-            accessory.purchase_price_with_vat = calculate_price_with_vat(accessory.purchase_price)
-            accessory.selling_price_with_vat = calculate_price_with_vat(accessory.selling_price)
+            # Store the prices with VAT
+            accessory.purchase_price_with_vat = purchase_price_with_vat
+            accessory.selling_price_with_vat = selling_price_with_vat
             
             db.session.commit()
             
@@ -1434,7 +1444,15 @@ if __name__ == '__main__':
         create_admin_user()  # Create admin user on startup if missing
         create_default_phone_types()  # Create default phone types if they don't exist
         create_default_accessory_categories()  # Create default accessory categories if they don't exist
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=5001)
-    args = parser.parse_args()
-    app.run(debug=True, port=args.port) 
+    
+    # Check if running in production
+    if os.environ.get('PORT'):
+        # Production deployment
+        port = int(os.environ.get('PORT'))
+        app.run(debug=False, host='0.0.0.0', port=port)
+    else:
+        # Development
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--port', type=int, default=5001)
+        args = parser.parse_args()
+        app.run(debug=True, port=args.port) 
