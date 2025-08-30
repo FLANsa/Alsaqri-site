@@ -601,8 +601,15 @@ def download_barcode_pdf(phone_number):
             
             # Company name at top - مطابق للصفحة
             company_text = "الصقري للإتصالات"
-            # Use much larger font for company name
-            company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 100) if os.path.exists('/System/Library/Fonts/Arial.ttf') else arabic_font
+            # Use much larger font for company name - تحسين تحميل الخط
+            try:
+                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 100)
+            except:
+                try:
+                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 100)
+                except:
+                    company_font = arabic_font
+            
             bbox = draw.textbbox((0, 0), company_text, font=company_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
