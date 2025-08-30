@@ -95,8 +95,9 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="age" class="form-label">عمر البطارية (بالأشهر)</label>
-                            <input type="number" class="form-control" id="age" name="age" required>
+                            <label for="age" class="form-label">عمر البطارية (بالنسبة المئوية)</label>
+                            <input type="number" class="form-control" id="age" name="age" min="0" max="100" required>
+                            <small class="form-text text-muted">أدخل النسبة المئوية من 0 إلى 100</small>
                         </div>
                         
                         <h5 class="mt-4 mb-3">معلومات العميل</h5>

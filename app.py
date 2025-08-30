@@ -501,7 +501,7 @@ def generate_barcode(phone_number, battery_age=None, customer_phone=None, custom
     
     # Add battery age if provided (for used phones)
     if battery_age is not None:
-        barcode_data += f"|B{battery_age:02d}"
+        barcode_data += f"|B{battery_age:03d}"
     
     # Create barcode with enhanced data
     barcode_class = barcode.get_barcode_class('code128')
