@@ -30,18 +30,7 @@
                                     <span class="sticker-value">{{ phone.age }} شهر</span>
                                 </div>
                                 {% endif %}
-                                {% if phone.customer_phone %}
-                                <div class="sticker-row">
-                                    <span class="sticker-label">هاتف العميل:</span>
-                                    <span class="sticker-value">{{ phone.customer_phone }}</span>
-                                </div>
-                                {% endif %}
-                                {% if phone.customer_id %}
-                                <div class="sticker-row">
-                                    <span class="sticker-label">رقم الهوية:</span>
-                                    <span class="sticker-value">{{ phone.customer_id }}</span>
-                                </div>
-                                {% endif %}
+
                             </div>
                         </div>
                     </div>
@@ -55,12 +44,6 @@
                                 <li>رقم الهاتف: {{ phone.phone_number }}</li>
                                 {% if phone.condition == 'used' and phone.age %}
                                 <li>عمر البطارية: {{ phone.age }} شهر</li>
-                                {% endif %}
-                                {% if phone.customer_phone %}
-                                <li>رقم هاتف العميل: {{ phone.customer_phone }}</li>
-                                {% endif %}
-                                {% if phone.customer_id %}
-                                <li>رقم هوية العميل: {{ phone.customer_id }}</li>
                                 {% endif %}
                             </ul>
                         </div>

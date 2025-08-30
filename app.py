@@ -496,32 +496,12 @@ def dashboard():
 # Transactions route removed - replaced by sales system
 
 def generate_barcode(phone_number, battery_age=None, customer_phone=None, customer_id=None):
-    # Create barcode data with all information
+    # Create barcode data with phone number and battery age only
     barcode_data = phone_number
     
     # Add battery age if provided (for used phones)
     if battery_age is not None:
         barcode_data += f"|B{battery_age:02d}"
-    
-    # Add customer phone if provided (ensure 10 digits)
-    if customer_phone:
-        # Clean and format customer phone to 10 digits
-        clean_phone = ''.join(filter(str.isdigit, customer_phone))
-        if len(clean_phone) >= 10:
-            clean_phone = clean_phone[-10:]  # Take last 10 digits
-        else:
-            clean_phone = clean_phone.zfill(10)  # Pad with zeros
-        barcode_data += f"|P{clean_phone}"
-    
-    # Add customer ID if provided (ensure 10 digits)
-    if customer_id:
-        # Clean and format customer ID to 10 digits
-        clean_id = ''.join(filter(str.isdigit, customer_id))
-        if len(clean_id) >= 10:
-            clean_id = clean_id[-10:]  # Take last 10 digits
-        else:
-            clean_id = clean_id.zfill(10)  # Pad with zeros
-        barcode_data += f"|I{clean_id}"
     
     # Create barcode with enhanced data
     barcode_class = barcode.get_barcode_class('code128')
