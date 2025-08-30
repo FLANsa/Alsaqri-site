@@ -10,16 +10,7 @@
             <div class="card">
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('add_new_phone') }}">
-                        <div class="mb-3">
-                            <label for="barcode_input" class="form-label">الباركود (اختياري)</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="barcode_input" name="barcode_input" 
-                                       placeholder="أدخل الباركود الموجود أو اتركه فارغاً لتوليد باركود جديد" 
-                                       value="{{ barcode if barcode else '' }}">
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearBarcode()">مسح</button>
-                            </div>
-                            <div class="form-text">أدخل الباركود الموجود على الهاتف أو اتركه فارغاً لتوليد باركود جديد</div>
-                        </div>
+
                         
                         <div class="mb-3">
                             <label for="brand" class="form-label">الشركة المصنعة</label>
@@ -169,14 +160,7 @@
 </div>
 
 <script>
-function clearBarcode() {
-    document.getElementById('barcode_input').value = '';
-}
 
-// Auto-focus on barcode input if it's empty
-if (!document.getElementById('barcode_input').value) {
-    document.getElementById('barcode_input').focus();
-}
 
 // VAT calculation functions
 function calculateVAT(price) {

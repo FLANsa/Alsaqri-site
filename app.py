@@ -4,11 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from datetime import datetime
 import os
 from sqlalchemy import func
-import barcode
-from barcode.writer import ImageWriter
-from io import BytesIO
 import random
-from PIL import Image
 import argparse
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -73,7 +69,6 @@ class Phone(db.Model):
     selling_price_with_vat = db.Column(db.Float, nullable=False)   # سعر البيع (مع ضريبة)
     serial_number = db.Column(db.String(100), unique=True, nullable=False)
     phone_number = db.Column(db.String(20), unique=True, nullable=False)  # New field for phone number
-    barcode_path = db.Column(db.String(200))  # New field for barcode image path
     description = db.Column(db.Text)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     warranty = db.Column(db.Integer)
@@ -495,53 +490,7 @@ def dashboard():
 
 # Transactions route removed - replaced by sales system
 
-def generate_barcode(phone_number, battery_age=None, customer_phone=None, customer_id=None):
-    # Create barcode data with phone number and battery age only
-    barcode_data = phone_number
-    
-    # Add battery age if provided (for used phones)
-    if battery_age is not None:
-        barcode_data += f"|B{battery_age:03d}"
-    
-    # Create barcode with enhanced data
-    barcode_class = barcode.get_barcode_class('code128')
-    barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
-    
-    # Set custom options for the barcode (optimized for XPrinter XP-470B thermal printer)
-    options = {
-        'module_width': 0.3,   # Width of each bar (optimal for thermal printing)
-        'module_height': 3,   # Height of the barcode (good for thermal printing)
-        'font_size': 8,        # Font size for the number (readable on thermal)
-        'text_distance': 1,    # Distance between barcode and text
-        'quiet_zone': 1,       # Quiet zone around the barcode
-        'dpi': 203            # DPI optimized for thermal printers
-    }
-    
-    # Create barcodes directory if it doesn't exist
-    if not os.path.exists('static/barcodes'):
-        os.makedirs('static/barcodes')
-    
-    # Save barcode image with custom options
-    filename = f"static/barcodes/{phone_number}"
-    barcode_path = barcode_instance.save(filename, options)
-    
-    # Convert the saved image to thermal printer optimized size (4cm x 2cm)
-    img = Image.open(barcode_path)
-    # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(4.0 * 37.795276)  # 4cm width (optimal for thermal printing)
-    height_px = int(2.0 * 37.795276) # 2cm height (optimal for thermal printing)
-    img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
-    img.save(barcode_path)
-    
-    return barcode_path
 
-@app.route('/barcode/<phone_number>')
-@login_required
-def get_barcode(phone_number):
-    phone = Phone.query.filter_by(phone_number=phone_number).first()
-    if phone and phone.barcode_path:
-        return send_file(phone.barcode_path, mimetype='image/png')
-    return "Barcode not found", 404
 
 def generate_unique_phone_number():
     # Get the highest existing phone number
@@ -562,65 +511,13 @@ def generate_unique_phone_number():
     phone_number = f"{next_number:06d}"
     return phone_number
 
-def process_barcode_input(barcode_input):
-    """Process barcode input and return phone number or None if invalid"""
-    if not barcode_input:
-        return None
-    
-    # Clean the barcode input (remove spaces, dashes, etc.)
-    cleaned_barcode = ''.join(filter(str.isdigit, barcode_input))
-    
-    # Check if it's a valid 6-digit number (our internal format)
-    if len(cleaned_barcode) == 6 and cleaned_barcode.isdigit():
-        return cleaned_barcode
-    
-    # If it's a different format, we can add validation here
-    # For now, return the cleaned input if it's numeric
-    if cleaned_barcode.isdigit():
-        return cleaned_barcode
-    
-    return None
 
 
 
-@app.route('/scan_barcode', methods=['GET', 'POST'])
-@login_required
-def scan_barcode():
-    if request.method == 'POST':
-        barcode_input = request.form.get('barcode_input')
-        phone_type = request.form.get('phone_type', 'new')  # new or used
-        
-        if not barcode_input:
-            flash('يرجى إدخال الباركود', 'error')
-            return redirect(url_for('scan_barcode'))
-        
-        phone_number = process_barcode_input(barcode_input)
-        if not phone_number:
-            flash('باركود غير صحيح', 'error')
-            return redirect(url_for('scan_barcode'))
-        
-        # Check if phone number already exists
-        existing_phone = Phone.query.filter_by(phone_number=phone_number).first()
-        if existing_phone:
-            flash(f'الهاتف برقم {phone_number} موجود بالفعل في النظام', 'error')
-            return redirect(url_for('scan_barcode'))
-        
-        # Redirect to appropriate add phone form with pre-filled barcode
-        if phone_type == 'used':
-            return redirect(url_for('add_used_phone', barcode=phone_number))
-        else:
-            return redirect(url_for('add_new_phone', barcode=phone_number))
-    
-    return render_template('scan_barcode.html')
 
-@app.route('/print_barcode/<phone_number>')
-@login_required
-def print_barcode(phone_number):
-    phone = Phone.query.filter_by(phone_number=phone_number).first()
-    if phone and phone.barcode_path:
-        return render_template('print_barcode.html', phone=phone)
-    flash('لم يتم العثور على الباركود', 'error')
-    return redirect(url_for('dashboard'))
+
+
+
 
 @app.route('/add_new_phone', methods=['GET', 'POST'])
 @login_required
@@ -642,10 +539,10 @@ def add_new_phone():
             purchase_vat = purchase_price_with_vat - purchase_price
             selling_vat = selling_price_with_vat - selling_price
             description = request.form.get('description')
-            barcode_input = request.form.get('barcode_input')
             
             # Customer information fields
             customer_name = request.form.get('customer_name')
+            customer_phone = request.form.get('customer_phone')
             customer_id = request.form.get('customer_id')
             phone_color = request.form.get('phone_color')
             phone_memory = request.form.get('phone_memory')
@@ -657,29 +554,13 @@ def add_new_phone():
                 flash('الرقم التسلسلي موجود بالفعل في النظام', 'error')
                 return redirect(url_for('add_new_phone'))
             
-            # Process barcode input
-            if barcode_input:
-                phone_number = process_barcode_input(barcode_input)
-                if not phone_number:
-                    flash('باركود غير صحيح', 'error')
-                    return redirect(url_for('add_new_phone'))
-                existing_phone = Phone.query.filter_by(phone_number=phone_number).first()
-                if existing_phone:
-                    flash(f'الهاتف برقم {phone_number} موجود بالفعل في النظام', 'error')
-                    return redirect(url_for('add_new_phone'))
-            else:
-                try:
-                    phone_number = generate_unique_phone_number()
-                except ValueError as e:
-                    flash(str(e), 'error')
-                    return redirect(url_for('add_new_phone'))
+            try:
+                phone_number = generate_unique_phone_number()
+            except ValueError as e:
+                flash(str(e), 'error')
+                return redirect(url_for('add_new_phone'))
             
-            # Generate barcode automatically with customer information
-            barcode_path = generate_barcode(
-                phone_number=phone_number,
-                customer_phone=customer_phone,
-                customer_id=customer_id
-            )
+
             
             new_phone = Phone(
                 brand=brand,
@@ -691,7 +572,6 @@ def add_new_phone():
                 selling_price_with_vat=selling_price_with_vat,
                 serial_number=serial_number,
                 phone_number=phone_number,
-                barcode_path=barcode_path,
                 description=description,
                 warranty=warranty,
                 customer_name=customer_name,
@@ -722,7 +602,7 @@ def add_new_phone():
             db.session.commit()
             
             flash('تمت إضافة الهاتف الجديد بنجاح', 'success')
-            return redirect(url_for('print_barcode', phone_number=phone_number))
+            return redirect(url_for('dashboard'))
         except ValueError:
             db.session.rollback()
             flash('خطأ في إدخال البيانات. يرجى التحقق من القيم المدخلة', 'error')
@@ -732,9 +612,6 @@ def add_new_phone():
             flash(f'حدث خطأ: {str(e)}', 'error')
             return redirect(url_for('add_new_phone'))
     
-    # Pre-fill barcode if provided in URL parameter
-    barcode = request.args.get('barcode', '')
-    
     # Get brands and models data for the dropdown
     brands = {}
     phone_types = PhoneType.query.all()
@@ -743,7 +620,7 @@ def add_new_phone():
             brands[phone_type.brand] = []
         brands[phone_type.brand].append(phone_type.model)
     
-    return render_template('add_new_phone.html', barcode=barcode, brands=brands)
+    return render_template('add_new_phone.html', brands=brands)
 
 @app.route('/add_used_phone', methods=['GET', 'POST'])
 @login_required
@@ -766,7 +643,6 @@ def add_used_phone():
             purchase_vat = purchase_price_with_vat - purchase_price
             selling_vat = selling_price_with_vat - selling_price
             description = request.form.get('description')
-            barcode_input = request.form.get('barcode_input')
             
             # Customer information fields
             customer_name = request.form.get('customer_name')
@@ -781,29 +657,13 @@ def add_used_phone():
                 flash('الرقم التسلسلي موجود بالفعل في النظام', 'error')
                 return redirect(url_for('add_used_phone'))
             
-            # Process barcode input
-            if barcode_input:
-                phone_number = process_barcode_input(barcode_input)
-                if not phone_number:
-                    flash('باركود غير صحيح', 'error')
-                    return redirect(url_for('add_used_phone'))
-                existing_phone = Phone.query.filter_by(phone_number=phone_number).first()
-                if existing_phone:
-                    flash(f'الهاتف برقم {phone_number} موجود بالفعل في النظام', 'error')
-                    return redirect(url_for('add_used_phone'))
-            else:
-                try:
-                    phone_number = generate_unique_phone_number()
-                except ValueError as e:
-                    flash(str(e), 'error')
-                    return redirect(url_for('add_used_phone'))
+            try:
+                phone_number = generate_unique_phone_number()
+            except ValueError as e:
+                flash(str(e), 'error')
+                return redirect(url_for('add_used_phone'))
             
-            barcode_path = generate_barcode(
-                phone_number=phone_number,
-                battery_age=age,
-                customer_phone=customer_phone,
-                customer_id=customer_id
-            )
+
             
             used_phone = Phone(
                 brand=brand,
@@ -815,7 +675,6 @@ def add_used_phone():
                 selling_price_with_vat=selling_price_with_vat,
                 serial_number=serial_number,
                 phone_number=phone_number,
-                barcode_path=barcode_path,
                 phone_condition=phone_condition,
                 age=age,
                 description=description,
@@ -846,7 +705,7 @@ def add_used_phone():
             db.session.commit()
             
             flash('تمت إضافة الهاتف المستعمل بنجاح', 'success')
-            return redirect(url_for('print_barcode', phone_number=phone_number))
+            return redirect(url_for('dashboard'))
         except ValueError:
             db.session.rollback()
             flash('خطأ في إدخال البيانات. يرجى التحقق من القيم المدخلة', 'error')
@@ -856,9 +715,6 @@ def add_used_phone():
             flash(f'حدث خطأ: {str(e)}', 'error')
             return redirect(url_for('add_used_phone'))
     
-    # Pre-fill barcode if provided in URL parameter
-    barcode = request.args.get('barcode', '')
-    
     # Get brands and models data for the dropdown
     brands = {}
     phone_types = PhoneType.query.all()
@@ -867,7 +723,7 @@ def add_used_phone():
             brands[phone_type.brand] = []
         brands[phone_type.brand].append(phone_type.model)
     
-    return render_template('add_used_phone.html', barcode=barcode, brands=brands)
+    return render_template('add_used_phone.html', brands=brands)
 
 @app.route('/dashboard/delete/<int:phone_id>', methods=['POST'])
 @login_required
