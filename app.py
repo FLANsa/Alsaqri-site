@@ -629,20 +629,20 @@ def download_barcode_pdf(phone_number):
             start_y = height_px - 60
             
             # Device number - Column 1
-            device_label = "رقم الجهاز"
+            device_label = "Device"
             device_value = phone.phone_number
             draw.text((col_width//2 - 20, start_y), device_label, fill='black', font=detail_font)
             draw.text((col_width//2 - 20, start_y + 20), device_value, fill='black', font=detail_font)
             
             # Battery percentage - Column 2
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-            battery_label = "نسبة البطارية"
+            battery_label = "Battery"
             draw.text((col_width + col_width//2 - 20, start_y), battery_label, fill='black', font=detail_font)
             draw.text((col_width + col_width//2 - 20, start_y + 20), battery_value, fill='black', font=detail_font)
             
             # Memory - Column 3
             memory_value = phone.phone_memory if phone.phone_memory else "512"
-            memory_label = "الذاكرة"
+            memory_label = "Memory"
             draw.text((2*col_width + col_width//2 - 20, start_y), memory_label, fill='black', font=detail_font)
             draw.text((2*col_width + col_width//2 - 20, start_y + 20), memory_value, fill='black', font=detail_font)
             
