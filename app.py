@@ -590,7 +590,7 @@ def download_barcode_pdf(phone_number):
                 arabic_font = None
                 for font_path in font_paths:
                     if os.path.exists(font_path):
-                        arabic_font = ImageFont.truetype(font_path, 24)
+                        arabic_font = ImageFont.truetype(font_path, 48)
                         break
                 
                 if arabic_font is None:
@@ -603,10 +603,10 @@ def download_barcode_pdf(phone_number):
             company_text = "الصقري للإتصالات"
             # Use much larger font for company name - تحسين تحميل الخط
             try:
-                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 100)
+                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 140)
             except:
                 try:
-                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 100)
+                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 140)
                 except:
                     company_font = arabic_font
             
