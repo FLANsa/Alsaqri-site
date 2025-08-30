@@ -53,29 +53,8 @@
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button onclick="verifyBarcode()" class="btn btn-info">
-                            <i class="fas fa-check-circle"></i> فحص الباركود
-                        </button>
                         <button onclick="window.print()" class="btn btn-primary">طباعة الملصق</button>
                         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">العودة للوحة التحكم</a>
-                    </div>
-                    
-                    <!-- Barcode Verification Modal -->
-                    <div class="modal fade" id="barcodeVerificationModal" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">نتيجة فحص الباركود</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body" id="verificationResult">
-                                    <!-- Verification results will be displayed here -->
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -215,75 +194,5 @@
 }
 </style>
 
-<script>
-function verifyBarcode() {
-    const phoneNumber = '{{ phone.phone_number }}';
-    const verificationResult = document.getElementById('verificationResult');
-    
-    // Show loading
-    verificationResult.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> جاري فحص الباركود...</div>';
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('barcodeVerificationModal'));
-    modal.show();
-    
-    // Fetch verification data
-    fetch(`/verify_barcode/${phoneNumber}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                verificationResult.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        خطأ: ${data.error}
-                    </div>
-                `;
-            } else {
-                let phoneInfoHtml = '';
-                if (data.phone_info) {
-                    phoneInfoHtml = `
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>العلامة التجارية:</strong> ${data.phone_info.brand}<br>
-                                <strong>الموديل:</strong> ${data.phone_info.model}<br>
-                                <strong>الحالة:</strong> ${data.phone_info.condition === 'new' ? 'جديد' : 'مستعمل'}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>عمر البطارية:</strong> ${data.phone_info.age || 'غير محدد'}%<br>
-                                <strong>الذاكرة:</strong> ${data.phone_info.phone_memory || 'غير محدد'}
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                verificationResult.innerHTML = `
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <strong>تم فحص الباركود بنجاح!</strong>
-                    </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <h6>معلومات الباركود:</h6>
-                            <ul>
-                                <li><strong>رقم الهاتف:</strong> ${data.phone_number}</li>
-                                <li><strong>عمر البطارية:</strong> ${data.battery_age || 'غير محدد'}%</li>
-                                <li><strong>بيانات الباركود المتوقعة:</strong> <code>${data.expected_barcode_data}</code></li>
-                                <li><strong>حالة الهاتف في قاعدة البيانات:</strong> ${data.phone_exists ? 'موجود' : 'غير موجود'}</li>
-                            </ul>
-                            ${phoneInfoHtml}
-                        </div>
-                    </div>
-                `;
-            }
-        })
-        .catch(error => {
-            verificationResult.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    خطأ في الاتصال: ${error.message}
-                </div>
-            `;
-        });
-}
-</script>
+
 {% endblock %} 
