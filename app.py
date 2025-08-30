@@ -637,7 +637,7 @@ def download_barcode_pdf(phone_number):
             # Device number - Column 1
             device_label = "رقم الجهاز"
             device_value = phone.phone_number
-            # Center text in column
+            # Center text in column with more spacing
             bbox1 = draw.textbbox((0, 0), device_label, font=detail_font_small)
             label_width1 = bbox1[2] - bbox1[0]
             x1 = col_width//2 - label_width1//2
@@ -646,7 +646,7 @@ def download_barcode_pdf(phone_number):
             bbox1_val = draw.textbbox((0, 0), device_value, font=detail_font_small)
             value_width1 = bbox1_val[2] - bbox1_val[0]
             x1_val = col_width//2 - value_width1//2
-            draw.text((x1_val, start_y + 18), device_value, fill='black', font=detail_font_small)
+            draw.text((x1_val, start_y + 25), device_value, fill='black', font=detail_font_small)
             
             # Battery percentage - Column 2
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
@@ -659,7 +659,7 @@ def download_barcode_pdf(phone_number):
             bbox2_val = draw.textbbox((0, 0), battery_value, font=detail_font_small)
             value_width2 = bbox2_val[2] - bbox2_val[0]
             x2_val = col_width + col_width//2 - value_width2//2
-            draw.text((x2_val, start_y + 18), battery_value, fill='black', font=detail_font_small)
+            draw.text((x2_val, start_y + 25), battery_value, fill='black', font=detail_font_small)
             
             # Memory - Column 3
             memory_value = phone.phone_memory if phone.phone_memory else "512"
@@ -672,7 +672,7 @@ def download_barcode_pdf(phone_number):
             bbox3_val = draw.textbbox((0, 0), memory_value, font=detail_font_small)
             value_width3 = bbox3_val[2] - bbox3_val[0]
             x3_val = 2*col_width + col_width//2 - value_width3//2
-            draw.text((x3_val, start_y + 18), memory_value, fill='black', font=detail_font_small)
+            draw.text((x3_val, start_y + 25), memory_value, fill='black', font=detail_font_small)
             
             return sticker_img
         
