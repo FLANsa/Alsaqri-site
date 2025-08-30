@@ -565,11 +565,49 @@ def download_barcode_pdf(phone_number):
         flash('الهاتف غير موجود', 'error')
         return redirect(url_for('dashboard'))
     
-    # Function to process Arabic text for PDF
-    def process_arabic_text(text):
-        reshaped_text = arabic_reshaper.reshape(text)
-        bidi_text = get_display(reshaped_text)
-        return bidi_text
+    # Function to create text image for Arabic text
+    def create_text_image(text, font_size=12, width=200, height=50):
+        from PIL import Image, ImageDraw, ImageFont
+        
+        # Create image with white background
+        img = Image.new('RGB', (width, height), color='white')
+        draw = ImageDraw.Draw(img)
+        
+        # Try to use a font that supports Arabic
+        try:
+            # Try different font paths
+            font_paths = [
+                '/System/Library/Fonts/Arial.ttf',  # macOS
+                '/System/Library/Fonts/Helvetica.ttc',  # macOS
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',  # Linux
+                'C:/Windows/Fonts/arial.ttf',  # Windows
+            ]
+            
+            font = None
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    font = ImageFont.truetype(font_path, font_size)
+                    break
+            
+            if font is None:
+                # Use default font
+                font = ImageFont.load_default()
+                
+        except:
+            font = ImageFont.load_default()
+        
+        # Calculate text position to center it
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        x = (width - text_width) // 2
+        y = (height - text_height) // 2
+        
+        # Draw text
+        draw.text((x, y), text, fill='black', font=font)
+        
+        return img
     
     # Create PDF with exact sticker dimensions (6cm x 3cm)
     buffer = BytesIO()
@@ -579,11 +617,12 @@ def download_barcode_pdf(phone_number):
     p.setFillColorRGB(1, 1, 1)
     p.rect(0, 0, 6*cm, 3*cm, fill=1)
     
-    # Company name at top - Arabic text
-    p.setFillColorRGB(0, 0, 0)
-    p.setFont("Helvetica-Bold", 8)
-    company_name = process_arabic_text("الصقري للإتصالات")
-    p.drawCentredString(3*cm, 2.6*cm, company_name)
+    # Create and add company name image
+    company_img = create_text_image("الصقري للإتصالات", font_size=16, width=300, height=40)
+    company_temp_path = f"static/barcodes/company_{phone_number}.png"
+    company_img.save(company_temp_path)
+    p.drawImage(company_temp_path, 1.5*cm, 2.4*cm, width=3*cm, height=0.4*cm)
+    os.remove(company_temp_path)
     
     # Barcode in center
     if phone.barcode_path and os.path.exists(phone.barcode_path):
@@ -602,30 +641,39 @@ def download_barcode_pdf(phone_number):
         # Clean up temp file
         os.remove(temp_path)
     
-    # Device details at bottom - Arabic labels
-    p.setFont("Helvetica", 6)
+    # Create and add Arabic labels as images
+    # Device number label
+    device_label_img = create_text_image("رقم الجهاز:", font_size=10, width=150, height=30)
+    device_temp_path = f"static/barcodes/device_label_{phone_number}.png"
+    device_label_img.save(device_temp_path)
+    p.drawImage(device_temp_path, 0.2*cm, 0.7*cm, width=1.5*cm, height=0.3*cm)
+    os.remove(device_temp_path)
     
-    # Device number
-    device_label = process_arabic_text("رقم الجهاز:")
-    p.drawString(0.5*cm, 0.8*cm, device_label)
-    p.setFont("Helvetica-Bold", 6)
-    p.drawString(0.5*cm, 0.6*cm, phone.phone_number)
+    # Device number value
+    p.setFont("Helvetica-Bold", 8)
+    p.drawString(0.5*cm, 0.5*cm, phone.phone_number)
     
-    # Battery percentage
-    p.setFont("Helvetica", 6)
+    # Battery label
+    battery_label_img = create_text_image("نسبة البطارية:", font_size=10, width=150, height=30)
+    battery_temp_path = f"static/barcodes/battery_label_{phone_number}.png"
+    battery_label_img.save(battery_temp_path)
+    p.drawImage(battery_temp_path, 2.2*cm, 0.7*cm, width=1.5*cm, height=0.3*cm)
+    os.remove(battery_temp_path)
+    
+    # Battery value
     battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-    battery_label = process_arabic_text("نسبة البطارية:")
-    p.drawString(2.5*cm, 0.8*cm, battery_label)
-    p.setFont("Helvetica-Bold", 6)
-    p.drawString(2.5*cm, 0.6*cm, battery_value)
+    p.drawString(2.5*cm, 0.5*cm, battery_value)
     
-    # Memory
-    p.setFont("Helvetica", 6)
+    # Memory label
+    memory_label_img = create_text_image("الذاكرة:", font_size=10, width=150, height=30)
+    memory_temp_path = f"static/barcodes/memory_label_{phone_number}.png"
+    memory_label_img.save(memory_temp_path)
+    p.drawImage(memory_temp_path, 4.2*cm, 0.7*cm, width=1.5*cm, height=0.3*cm)
+    os.remove(memory_temp_path)
+    
+    # Memory value
     memory_value = phone.phone_memory if phone.phone_memory else "512"
-    memory_label = process_arabic_text("الذاكرة:")
-    p.drawString(4.5*cm, 0.8*cm, memory_label)
-    p.setFont("Helvetica-Bold", 6)
-    p.drawString(4.5*cm, 0.6*cm, memory_value)
+    p.drawString(4.5*cm, 0.5*cm, memory_value)
     
     p.showPage()
     p.save()
