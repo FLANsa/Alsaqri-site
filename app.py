@@ -622,7 +622,14 @@ def download_barcode_pdf(phone_number):
                 sticker_img.paste(barcode_img, (barcode_x, barcode_y))
             
             # Device details at bottom - مطابق للصفحة
-            detail_font = ImageFont.load_default()
+            # Use a better font for English text
+            try:
+                detail_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 16)
+            except:
+                try:
+                    detail_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 16)
+                except:
+                    detail_font = ImageFont.load_default()
             
             # Calculate positions for 3 columns like in page
             col_width = width_px // 3
