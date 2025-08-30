@@ -603,10 +603,10 @@ def download_barcode_pdf(phone_number):
             company_text = "الصقري للإتصالات"
             # Use much larger font for company name - تحسين تحميل الخط
             try:
-                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 140)
+                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 160)
             except:
                 try:
-                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 140)
+                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 160)
                 except:
                     company_font = arabic_font
             
