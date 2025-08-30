@@ -601,13 +601,13 @@ def download_barcode_pdf(phone_number):
             
             # Company name at top - مطابق للصفحة
             company_text = "الصقري للإتصالات"
-            # Use larger font for company name
-            company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 32) if os.path.exists('/System/Library/Fonts/Arial.ttf') else arabic_font
+            # Use much larger font for company name
+            company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 48) if os.path.exists('/System/Library/Fonts/Arial.ttf') else arabic_font
             bbox = draw.textbbox((0, 0), company_text, font=company_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
             x = (width_px - text_width) // 2
-            y = 15  # Top area like in page
+            y = 10  # Top area like in page
             draw.text((x, y), company_text, fill='black', font=company_font)
             
             # Barcode in center - مطابق للصفحة
