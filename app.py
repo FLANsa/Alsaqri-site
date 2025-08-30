@@ -510,7 +510,7 @@ def generate_barcode(phone_number, battery_age=None, customer_phone=None, custom
     # Set custom options for the barcode (optimized for XPrinter XP-470B thermal printer)
     options = {
         'module_width': 0.3,   # Width of each bar (optimal for thermal printing)
-        'module_height': 12,   # Height of the barcode (good for thermal printing)
+        'module_height': 3,   # Height of the barcode (good for thermal printing)
         'font_size': 8,        # Font size for the number (readable on thermal)
         'text_distance': 1,    # Distance between barcode and text
         'quiet_zone': 1,       # Quiet zone around the barcode
@@ -580,6 +580,54 @@ def process_barcode_input(barcode_input):
         return cleaned_barcode
     
     return None
+
+def verify_barcode_data(phone_number, battery_age=None):
+    """Verify barcode data and return verification info"""
+    try:
+        # Generate the expected barcode data
+        expected_data = phone_number
+        if battery_age is not None:
+            expected_data += f"|B{battery_age:03d}"
+        
+        # Check if phone exists in database
+        phone = Phone.query.filter_by(phone_number=phone_number).first()
+        
+        verification_info = {
+            'phone_number': phone_number,
+            'battery_age': battery_age,
+            'expected_barcode_data': expected_data,
+            'phone_exists': phone is not None,
+            'phone_info': None
+        }
+        
+        if phone:
+            verification_info['phone_info'] = {
+                'brand': phone.brand,
+                'model': phone.model,
+                'condition': phone.condition,
+                'age': phone.age,
+                'phone_memory': phone.phone_memory
+            }
+        
+        return verification_info
+    except Exception as e:
+        return {'error': str(e)}
+
+@app.route('/verify_barcode/<phone_number>')
+@login_required
+def verify_barcode(phone_number):
+    """Verify barcode data for a specific phone"""
+    try:
+        phone = Phone.query.filter_by(phone_number=phone_number).first()
+        if not phone:
+            return jsonify({'error': 'Phone not found'}), 404
+        
+        battery_age = phone.age if phone.condition == 'used' else None
+        verification_info = verify_barcode_data(phone_number, battery_age)
+        
+        return jsonify(verification_info)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/scan_barcode', methods=['GET', 'POST'])
 @login_required
