@@ -8,31 +8,66 @@
         <div class="col-md-6 text-center">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title mb-4">باركود الهاتف</h4>
-                    <div class="mb-4">
-                        <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
+                    <h4 class="card-title mb-4">باركود الهاتف - ملصق صغير</h4>
+                    
+                    <!-- Sticker Preview -->
+                    <div class="sticker-preview mb-4">
+                        <div class="sticker-content">
+                            <div class="sticker-header">
+                                <strong>{{ phone.brand }} {{ phone.model }}</strong>
+                            </div>
+                            <div class="sticker-barcode">
+                                <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
+                            </div>
+                            <div class="sticker-info">
+                                <div class="sticker-row">
+                                    <span class="sticker-label">رقم:</span>
+                                    <span class="sticker-value">{{ phone.phone_number }}</span>
+                                </div>
+                                {% if phone.condition == 'used' and phone.age %}
+                                <div class="sticker-row">
+                                    <span class="sticker-label">عمر البطارية:</span>
+                                    <span class="sticker-value">{{ phone.age }} شهر</span>
+                                </div>
+                                {% endif %}
+                                {% if phone.customer_phone %}
+                                <div class="sticker-row">
+                                    <span class="sticker-label">هاتف العميل:</span>
+                                    <span class="sticker-value">{{ phone.customer_phone }}</span>
+                                </div>
+                                {% endif %}
+                                {% if phone.customer_id %}
+                                <div class="sticker-row">
+                                    <span class="sticker-label">رقم الهوية:</span>
+                                    <span class="sticker-value">{{ phone.customer_id }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
+                    
                     <div class="mb-4">
-                        <h5>معلومات الهاتف</h5>
-                        {% if phone.condition == 'used' and phone.age %}
+                        <h5>معلومات الباركود المشفر</h5>
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
-                            <strong>ملاحظة:</strong> عمر البطارية ({{ phone.age }} شهر) مشفر في الباركود
+                            <strong>الباركود يحتوي على:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>رقم الهاتف: {{ phone.phone_number }}</li>
+                                {% if phone.condition == 'used' and phone.age %}
+                                <li>عمر البطارية: {{ phone.age }} شهر</li>
+                                {% endif %}
+                                {% if phone.customer_phone %}
+                                <li>رقم هاتف العميل: {{ phone.customer_phone }}</li>
+                                {% endif %}
+                                {% if phone.customer_id %}
+                                <li>رقم هوية العميل: {{ phone.customer_id }}</li>
+                                {% endif %}
+                            </ul>
                         </div>
-                        {% endif %}
-                        <p class="mb-1"><strong>الشركة المصنعة:</strong> {{ phone.brand }}</p>
-                        <p class="mb-1"><strong>الموديل:</strong> {{ phone.model }}</p>
-                        <p class="mb-1"><strong>رقم الهاتف:</strong> {{ phone.phone_number }}</p>
-                        <p class="mb-1"><strong>الرقم التسلسلي:</strong> {{ phone.serial_number }}</p>
-                        {% if phone.condition == 'new' %}
-                        <p class="mb-1"><strong>فترة الضمان:</strong> {{ phone.warranty }} شهر</p>
-                        {% else %}
-                        <p class="mb-1"><strong>حالة الهاتف:</strong> {{ phone.phone_condition }}</p>
-                        <p class="mb-1"><strong>عمر البطارية:</strong> {{ phone.age }} شهر</p>
-                        {% endif %}
                     </div>
+                    
                     <div class="d-grid gap-2">
-                        <button onclick="window.print()" class="btn btn-primary">طباعة الباركود</button>
+                        <button onclick="window.print()" class="btn btn-primary">طباعة الملصق</button>
                         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">العودة للوحة التحكم</a>
                     </div>
                 </div>
@@ -42,8 +77,61 @@
 </div>
 
 <style>
+.sticker-preview {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.sticker-content {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.sticker-header {
+    text-align: center;
+    font-size: 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.sticker-barcode {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.sticker-barcode img {
+    max-width: 100%;
+    height: auto;
+}
+
+.sticker-info {
+    font-size: 10px;
+}
+
+.sticker-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.sticker-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.sticker-value {
+    color: #333;
+}
+
 @media print {
-    .btn, .card-title {
+    .btn, .card-title, .alert {
         display: none;
     }
     .card {
@@ -52,9 +140,21 @@
     .card-body {
         padding: 0;
     }
-    img {
+    .sticker-preview {
+        border: none;
+        background: white;
+        padding: 0;
+    }
+    .sticker-content {
+        border: none;
+        padding: 5px;
+    }
+    .sticker-barcode img {
         max-width: 100%;
         height: auto;
+    }
+    .sticker-info {
+        font-size: 8px;
     }
 }
 </style>

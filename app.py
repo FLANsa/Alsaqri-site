@@ -82,6 +82,7 @@ class Phone(db.Model):
     
     # Customer information fields
     customer_name = db.Column(db.String(100))  # اسم العميل
+    customer_phone = db.Column(db.String(20))  # رقم هاتف العميل
     customer_id = db.Column(db.String(50))     # رقم الهوية / الإقامة
     phone_color = db.Column(db.String(50))     # لون الجوال
     phone_memory = db.Column(db.String(50))    # الذاكرة
@@ -494,19 +495,46 @@ def dashboard():
 
 # Transactions route removed - replaced by sales system
 
-def generate_barcode(phone_number):
-    # Create barcode with phone number only
-    barcode_class = barcode.get_barcode_class('code128')
-    barcode_instance = barcode_class(phone_number, writer=ImageWriter())
+def generate_barcode(phone_number, battery_age=None, customer_phone=None, customer_id=None):
+    # Create barcode data with all information
+    barcode_data = phone_number
     
-    # Set custom options for the barcode
+    # Add battery age if provided (for used phones)
+    if battery_age is not None:
+        barcode_data += f"|B{battery_age:02d}"
+    
+    # Add customer phone if provided (ensure 10 digits)
+    if customer_phone:
+        # Clean and format customer phone to 10 digits
+        clean_phone = ''.join(filter(str.isdigit, customer_phone))
+        if len(clean_phone) >= 10:
+            clean_phone = clean_phone[-10:]  # Take last 10 digits
+        else:
+            clean_phone = clean_phone.zfill(10)  # Pad with zeros
+        barcode_data += f"|P{clean_phone}"
+    
+    # Add customer ID if provided (ensure 10 digits)
+    if customer_id:
+        # Clean and format customer ID to 10 digits
+        clean_id = ''.join(filter(str.isdigit, customer_id))
+        if len(clean_id) >= 10:
+            clean_id = clean_id[-10:]  # Take last 10 digits
+        else:
+            clean_id = clean_id.zfill(10)  # Pad with zeros
+        barcode_data += f"|I{clean_id}"
+    
+    # Create barcode with enhanced data
+    barcode_class = barcode.get_barcode_class('code128')
+    barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
+    
+    # Set custom options for the barcode (smaller for sticker)
     options = {
-        'module_width': 0.2,  # Width of each bar
-        'module_height': 15,  # Height of the barcode
-        'font_size': 10,      # Font size for the number
-        'text_distance': 2,   # Distance between barcode and text
-        'quiet_zone': 2,      # Quiet zone around the barcode
-        'dpi': 300           # DPI for better quality
+        'module_width': 0.15,  # Width of each bar (smaller)
+        'module_height': 12,   # Height of the barcode (smaller)
+        'font_size': 8,        # Font size for the number (smaller)
+        'text_distance': 1,    # Distance between barcode and text
+        'quiet_zone': 1,       # Quiet zone around the barcode
+        'dpi': 300            # DPI for better quality
     }
     
     # Create barcodes directory if it doesn't exist
@@ -517,11 +545,11 @@ def generate_barcode(phone_number):
     filename = f"static/barcodes/{phone_number}"
     barcode_path = barcode_instance.save(filename, options)
     
-    # Convert the saved image to the exact size (4.4cm x 2.5cm)
+    # Convert the saved image to sticker size (3cm x 2cm)
     img = Image.open(barcode_path)
     # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(4.4 * 37.795276)
-    height_px = int(2.5 * 37.795276)
+    width_px = int(3.0 * 37.795276)  # 3cm width
+    height_px = int(2.0 * 37.795276) # 2cm height
     img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
     img.save(barcode_path)
     
@@ -664,8 +692,12 @@ def add_new_phone():
                     flash(str(e), 'error')
                     return redirect(url_for('add_new_phone'))
             
-            # Generate barcode automatically
-            barcode_path = generate_barcode(phone_number)
+            # Generate barcode automatically with customer information
+            barcode_path = generate_barcode(
+                phone_number=phone_number,
+                customer_phone=customer_phone,
+                customer_id=customer_id
+            )
             
             new_phone = Phone(
                 brand=brand,
@@ -681,6 +713,7 @@ def add_new_phone():
                 description=description,
                 warranty=warranty,
                 customer_name=customer_name,
+                customer_phone=customer_phone,
                 customer_id=customer_id,
                 phone_color=phone_color,
                 phone_memory=phone_memory,
@@ -782,7 +815,12 @@ def add_used_phone():
                     flash(str(e), 'error')
                     return redirect(url_for('add_used_phone'))
             
-            barcode_path = generate_barcode(phone_number)
+            barcode_path = generate_barcode(
+                phone_number=phone_number,
+                battery_age=age,
+                customer_phone=customer_phone,
+                customer_id=customer_id
+            )
             
             used_phone = Phone(
                 brand=brand,
@@ -799,6 +837,7 @@ def add_used_phone():
                 age=age,
                 description=description,
                 customer_name=customer_name,
+                customer_phone=customer_phone,
                 customer_id=customer_id,
                 phone_color=phone_color,
                 phone_memory=phone_memory,
