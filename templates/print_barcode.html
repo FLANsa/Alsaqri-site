@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}طباعة الباركود{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="text-center">طباعة باركود الهاتف</h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="sticker-preview mb-4">
+                        <div class="sticker-content">
+                            <div class="sticker-header">
+                                <strong>الصقري للإتصالات</strong>
+                            </div>
+                            <div class="sticker-barcode">
+                                <img src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}" alt="Barcode" class="img-fluid">
+                            </div>
+                            <div class="sticker-info">
+                                <div class="sticker-row">
+                                    <div class="sticker-field">
+                                        <div class="sticker-label">رقم الجهاز</div>
+                                        <div class="sticker-value">{{ phone.phone_number }}</div>
+                                    </div>
+                                    <div class="sticker-field">
+                                        <div class="sticker-label">نسبة البطارية</div>
+                                        <div class="sticker-value">{% if phone.condition == 'used' and phone.age %}{{ phone.age }}{% else %}100{% endif %}</div>
+                                    </div>
+                                    <div class="sticker-field">
+                                        <div class="sticker-label">الذاكرة</div>
+                                        <div class="sticker-value">{% if phone.phone_memory %}{{ phone.phone_memory }}{% else %}512{% endif %}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button onclick="window.print()" class="btn btn-primary">طباعة الملصق</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">العودة للوحة التحكم</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.sticker-preview {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.sticker-content {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    max-width: 200px;
+    margin: 0 auto;
+    width: 2cm;
+    height: 5cm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.sticker-header {
+    text-align: center;
+    font-size: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 2px;
+}
+
+.sticker-barcode {
+    text-align: center;
+    margin: 4px 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sticker-barcode img {
+    width: 100%;
+    height: auto;
+    max-width: none;
+}
+
+.sticker-info {
+    font-size: 6px;
+    margin-top: 4px;
+}
+
+.sticker-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1px;
+}
+
+.sticker-field {
+    flex: 1;
+    text-align: center;
+}
+
+.sticker-label {
+    font-weight: bold;
+    color: #333;
+    font-size: 5px;
+    margin-bottom: 1px;
+}
+
+.sticker-value {
+    color: #333;
+    font-weight: bold;
+    font-size: 7px;
+}
+
+@media print {
+    .btn, .card-title, .alert {
+        display: none;
+    }
+    .card {
+        border: none;
+    }
+    .card-body {
+        padding: 0;
+    }
+    .sticker-preview {
+        border: none;
+        background: white;
+        padding: 0;
+    }
+    .sticker-content {
+        border: none;
+        padding: 2px;
+        max-width: none;
+        background: white;
+        width: 2cm;
+        height: 5cm;
+    }
+    .sticker-header {
+        font-size: 6px;
+        margin-bottom: 2px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .sticker-barcode {
+        margin: 2px 0;
+        text-align: center;
+        width: 100%;
+    }
+    .sticker-barcode img {
+        width: 100%;
+        height: auto;
+        max-width: none;
+        display: block;
+        margin: 0 auto;
+    }
+    .sticker-info {
+        margin-top: 2px;
+        font-size: 4px;
+    }
+    .sticker-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0;
+    }
+    .sticker-field {
+        flex: 1;
+        text-align: center;
+    }
+    .sticker-label {
+        font-weight: bold;
+        color: #333;
+        font-size: 3px;
+        margin-bottom: 0;
+    }
+    .sticker-value {
+        color: #333;
+        font-weight: bold;
+        font-size: 5px;
+    }
+}
+</style>
+{% endblock %}

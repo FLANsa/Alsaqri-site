@@ -5,6 +5,9 @@ from datetime import datetime
 import os
 from sqlalchemy import func
 import random
+import barcode
+from barcode.writer import ImageWriter
+from PIL import Image
 import argparse
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -69,6 +72,7 @@ class Phone(db.Model):
     selling_price_with_vat = db.Column(db.Float, nullable=False)   # سعر البيع (مع ضريبة)
     serial_number = db.Column(db.String(100), unique=True, nullable=False)
     phone_number = db.Column(db.String(20), unique=True, nullable=False)  # New field for phone number
+    barcode_path = db.Column(db.String(200))  # New field for barcode image path
     description = db.Column(db.Text)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     warranty = db.Column(db.Integer)
@@ -490,7 +494,61 @@ def dashboard():
 
 # Transactions route removed - replaced by sales system
 
+def generate_barcode(phone_number, battery_age=None):
+    """Generate barcode for phone with sticker design"""
+    # Create barcode data with phone number and battery age
+    barcode_data = phone_number
+    if battery_age is not None:
+        barcode_data += f"|B{battery_age:03d}"
+    
+    # Create barcode with enhanced data
+    barcode_class = barcode.get_barcode_class('code128')
+    barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
+    
+    # Set custom options for the barcode (optimized for 2x5cm sticker)
+    options = {
+        'module_width': 0.2,   # Width of each bar
+        'module_height': 8,    # Height of the barcode
+        'font_size': 6,        # Font size for the number
+        'text_distance': 0.5,  # Distance between barcode and text
+        'quiet_zone': 0.5,     # Quiet zone around the barcode
+        'dpi': 203            # DPI optimized for thermal printers
+    }
+    
+    # Create barcodes directory if it doesn't exist
+    if not os.path.exists('static/barcodes'):
+        os.makedirs('static/barcodes')
+    
+    # Save barcode image with custom options
+    filename = f"static/barcodes/{phone_number}"
+    barcode_path = barcode_instance.save(filename, options)
+    
+    # Convert the saved image to sticker size (2cm x 5cm)
+    img = Image.open(barcode_path)
+    # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
+    width_px = int(2.0 * 37.795276)   # 2cm width
+    height_px = int(5.0 * 37.795276)  # 5cm height
+    img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
+    img.save(barcode_path)
+    
+    return barcode_path
 
+@app.route('/barcode/<phone_number>')
+@login_required
+def get_barcode(phone_number):
+    phone = Phone.query.filter_by(phone_number=phone_number).first()
+    if phone and phone.barcode_path:
+        return send_file(phone.barcode_path, mimetype='image/png')
+    return "Barcode not found", 404
+
+@app.route('/print_barcode/<phone_number>')
+@login_required
+def print_barcode(phone_number):
+    phone = Phone.query.filter_by(phone_number=phone_number).first()
+    if not phone:
+        flash('الهاتف غير موجود', 'error')
+        return redirect(url_for('dashboard'))
+    return render_template('print_barcode.html', phone=phone)
 
 def generate_unique_phone_number():
     # Get the highest existing phone number
@@ -560,7 +618,8 @@ def add_new_phone():
                 flash(str(e), 'error')
                 return redirect(url_for('add_new_phone'))
             
-
+            # Generate barcode automatically
+            barcode_path = generate_barcode(phone_number=phone_number)
             
             new_phone = Phone(
                 brand=brand,
@@ -572,6 +631,7 @@ def add_new_phone():
                 selling_price_with_vat=selling_price_with_vat,
                 serial_number=serial_number,
                 phone_number=phone_number,
+                barcode_path=barcode_path,
                 description=description,
                 warranty=warranty,
                 customer_name=customer_name,
@@ -602,7 +662,7 @@ def add_new_phone():
             db.session.commit()
             
             flash('تمت إضافة الهاتف الجديد بنجاح', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('print_barcode', phone_number=phone_number))
         except ValueError:
             db.session.rollback()
             flash('خطأ في إدخال البيانات. يرجى التحقق من القيم المدخلة', 'error')
@@ -663,7 +723,8 @@ def add_used_phone():
                 flash(str(e), 'error')
                 return redirect(url_for('add_used_phone'))
             
-
+            # Generate barcode automatically with battery age
+            barcode_path = generate_barcode(phone_number=phone_number, battery_age=age)
             
             used_phone = Phone(
                 brand=brand,
@@ -675,6 +736,7 @@ def add_used_phone():
                 selling_price_with_vat=selling_price_with_vat,
                 serial_number=serial_number,
                 phone_number=phone_number,
+                barcode_path=barcode_path,
                 phone_condition=phone_condition,
                 age=age,
                 description=description,
@@ -705,7 +767,7 @@ def add_used_phone():
             db.session.commit()
             
             flash('تمت إضافة الهاتف المستعمل بنجاح', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('print_barcode', phone_number=phone_number))
         except ValueError:
             db.session.rollback()
             flash('خطأ في إدخال البيانات. يرجى التحقق من القيم المدخلة', 'error')
