@@ -601,12 +601,14 @@ def download_barcode_pdf(phone_number):
             
             # Company name at top - مطابق للصفحة
             company_text = "الصقري للإتصالات"
-            bbox = draw.textbbox((0, 0), company_text, font=arabic_font)
+            # Use larger font for company name
+            company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 32) if os.path.exists('/System/Library/Fonts/Arial.ttf') else arabic_font
+            bbox = draw.textbbox((0, 0), company_text, font=company_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
             x = (width_px - text_width) // 2
-            y = 20  # Top area like in page
-            draw.text((x, y), company_text, fill='black', font=arabic_font)
+            y = 15  # Top area like in page
+            draw.text((x, y), company_text, fill='black', font=company_font)
             
             # Barcode in center - مطابق للصفحة
             if phone.barcode_path and os.path.exists(phone.barcode_path):
@@ -625,27 +627,52 @@ def download_barcode_pdf(phone_number):
             # Use the same Arabic font for all text
             detail_font = arabic_font
             
-            # Calculate positions for 3 columns like in page
+            # Calculate positions for 3 columns like in page - تحسين الترتيب
             col_width = width_px // 3
-            start_y = height_px - 60
+            start_y = height_px - 70
+            
+            # Use smaller font for details
+            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 14) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
             
             # Device number - Column 1
             device_label = "رقم الجهاز"
             device_value = phone.phone_number
-            draw.text((col_width//2 - 20, start_y), device_label, fill='black', font=detail_font)
-            draw.text((col_width//2 - 20, start_y + 20), device_value, fill='black', font=detail_font)
+            # Center text in column
+            bbox1 = draw.textbbox((0, 0), device_label, font=detail_font_small)
+            label_width1 = bbox1[2] - bbox1[0]
+            x1 = col_width//2 - label_width1//2
+            draw.text((x1, start_y), device_label, fill='black', font=detail_font_small)
+            
+            bbox1_val = draw.textbbox((0, 0), device_value, font=detail_font_small)
+            value_width1 = bbox1_val[2] - bbox1_val[0]
+            x1_val = col_width//2 - value_width1//2
+            draw.text((x1_val, start_y + 18), device_value, fill='black', font=detail_font_small)
             
             # Battery percentage - Column 2
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
             battery_label = "نسبة البطارية"
-            draw.text((col_width + col_width//2 - 20, start_y), battery_label, fill='black', font=detail_font)
-            draw.text((col_width + col_width//2 - 20, start_y + 20), battery_value, fill='black', font=detail_font)
+            bbox2 = draw.textbbox((0, 0), battery_label, font=detail_font_small)
+            label_width2 = bbox2[2] - bbox2[0]
+            x2 = col_width + col_width//2 - label_width2//2
+            draw.text((x2, start_y), battery_label, fill='black', font=detail_font_small)
+            
+            bbox2_val = draw.textbbox((0, 0), battery_value, font=detail_font_small)
+            value_width2 = bbox2_val[2] - bbox2_val[0]
+            x2_val = col_width + col_width//2 - value_width2//2
+            draw.text((x2_val, start_y + 18), battery_value, fill='black', font=detail_font_small)
             
             # Memory - Column 3
             memory_value = phone.phone_memory if phone.phone_memory else "512"
             memory_label = "الذاكرة"
-            draw.text((2*col_width + col_width//2 - 20, start_y), memory_label, fill='black', font=detail_font)
-            draw.text((2*col_width + col_width//2 - 20, start_y + 20), memory_value, fill='black', font=detail_font)
+            bbox3 = draw.textbbox((0, 0), memory_label, font=detail_font_small)
+            label_width3 = bbox3[2] - bbox3[0]
+            x3 = 2*col_width + col_width//2 - label_width3//2
+            draw.text((x3, start_y), memory_label, fill='black', font=detail_font_small)
+            
+            bbox3_val = draw.textbbox((0, 0), memory_value, font=detail_font_small)
+            value_width3 = bbox3_val[2] - bbox3_val[0]
+            x3_val = 2*col_width + col_width//2 - value_width3//2
+            draw.text((x3_val, start_y + 18), memory_value, fill='black', font=detail_font_small)
             
             return sticker_img
         
