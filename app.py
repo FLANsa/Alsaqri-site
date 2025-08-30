@@ -600,7 +600,7 @@ def download_barcode_pdf(phone_number):
                 arabic_font = ImageFont.load_default()
             
             # Company name at top
-            company_text = "الصقري للإتصالات"
+            company_text = "ALSAQRI COMMUNICATIONS"
             bbox = draw.textbbox((0, 0), company_text, font=arabic_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
@@ -625,20 +625,20 @@ def download_barcode_pdf(phone_number):
             detail_font = ImageFont.load_default()
             
             # Device number
-            device_label = "رقم الجهاز:"
+            device_label = "Device:"
             device_value = phone.phone_number
             draw.text((20, 20), device_label, fill='black', font=detail_font)
             draw.text((20, 40), device_value, fill='black', font=detail_font)
             
             # Battery percentage
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-            battery_label = "نسبة البطارية:"
+            battery_label = "Battery:"
             draw.text((width_px//3, 20), battery_label, fill='black', font=detail_font)
             draw.text((width_px//3, 40), battery_value, fill='black', font=detail_font)
             
             # Memory
             memory_value = phone.phone_memory if phone.phone_memory else "512"
-            memory_label = "الذاكرة:"
+            memory_label = "Memory:"
             draw.text((2*width_px//3, 20), memory_label, fill='black', font=detail_font)
             draw.text((2*width_px//3, 40), memory_value, fill='black', font=detail_font)
             
