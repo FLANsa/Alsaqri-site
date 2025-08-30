@@ -23,13 +23,27 @@
                         
                         <div class="mb-3">
                             <label for="brand" class="form-label">الشركة المصنعة</label>
-                            <input type="text" class="form-control" id="brand" name="brand" required 
-                                   placeholder="مثال: Apple, Samsung, Huawei">
+                            <div class="input-group">
+                                <select class="form-select" id="brand" name="brand" required onchange="updateModelOptions()">
+                                    <option value="">اختر الشركة المصنعة</option>
+                                    {% for brand in brands.keys() %}
+                                        <option value="{{ brand }}">{{ brand }}</option>
+                                    {% endfor %}
+                                    <option value="other">أخرى</option>
+                                </select>
+                                <button class="btn btn-outline-success" type="button" onclick="addPhoneType()">
+                                    <i class="fas fa-plus"></i> إضافة
+                                </button>
+                                <button class="btn btn-outline-danger" type="button" onclick="deletePhoneType()">
+                                    <i class="fas fa-trash"></i> حذف
+                                </button>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="model" class="form-label">الموديل</label>
-                            <input type="text" class="form-control" id="model" name="model" required 
-                                   placeholder="مثال: iPhone 15, Galaxy S24, P60 Pro">
+                            <select class="form-select" id="model" name="model" required>
+                                <option value="">اختر الموديل</option>
+                            </select>
                         </div>
                         <div class="row">
                             <div class="col-md-6">

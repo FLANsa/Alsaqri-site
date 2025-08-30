@@ -680,9 +680,13 @@ def add_new_phone():
     # Pre-fill barcode if provided in URL parameter
     barcode = request.args.get('barcode', '')
     
-    # Get brands and models data for the dropdown (empty since we deleted all phone types)
+    # Get brands and models data for the dropdown
     brands = {}
-    # Phone types are now empty, so users will enter brand and model manually
+    phone_types = PhoneType.query.all()
+    for phone_type in phone_types:
+        if phone_type.brand not in brands:
+            brands[phone_type.brand] = []
+        brands[phone_type.brand].append(phone_type.model)
     
     return render_template('add_new_phone.html', barcode=barcode, brands=brands)
 
@@ -793,9 +797,13 @@ def add_used_phone():
     # Pre-fill barcode if provided in URL parameter
     barcode = request.args.get('barcode', '')
     
-    # Get brands and models data for the dropdown (empty since we deleted all phone types)
+    # Get brands and models data for the dropdown
     brands = {}
-    # Phone types are now empty, so users will enter brand and model manually
+    phone_types = PhoneType.query.all()
+    for phone_type in phone_types:
+        if phone_type.brand not in brands:
+            brands[phone_type.brand] = []
+        brands[phone_type.brand].append(phone_type.model)
     
     return render_template('add_used_phone.html', barcode=barcode, brands=brands)
 
@@ -1334,8 +1342,13 @@ def delete_phone_type_ajax():
 def get_phone_types_ajax():
     """Get phone types for AJAX"""
     try:
-        # Phone types are now empty, return empty brands dict
+        phone_types = PhoneType.query.all()
         brands = {}
+        for phone_type in phone_types:
+            if phone_type.brand not in brands:
+                brands[phone_type.brand] = []
+            brands[phone_type.brand].append(phone_type.model)
+        
         return jsonify({'success': True, 'brands': brands})
     except Exception as e:
         return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'})
