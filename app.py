@@ -275,6 +275,24 @@ def limited_dashboard():
     
     return render_template('limited_dashboard.html')
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for online deployment"""
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'message': 'Application is running successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'database': 'error',
+            'error': str(e)
+        }), 500
+
 @app.route('/favicon.ico')
 def favicon():
     static_favicon = os.path.join(app.root_path, 'static', 'favicon.ico')
@@ -846,7 +864,7 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# Invoice routes removed - invoices are now generated from Sale data
+# Invoice routes removed - replaced by sales system
 
 @app.route('/create_sale')
 @login_required
@@ -1464,27 +1482,58 @@ def get_accessory_categories_ajax():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Create tables if they do not exist
-        
-        # Try to create users normally first
+        # Force recreate database for online deployment
         try:
-            create_admin_user()  # Create admin user on startup if missing
-            create_limited_user()  # Create limited user on startup if missing
+            db.drop_all()
+            db.create_all()
+            print("Database recreated successfully!")
+        except Exception as e:
+            print(f"Database recreation error: {e}")
+            # Try to create tables if they don't exist
+            db.create_all()
+        
+        # Create users with error handling
+        try:
+            # Create admin user
+            admin = User(
+                username='admin',
+                password=generate_password_hash('admin123'),
+                is_admin=True,
+                role='admin',
+                can_access_dashboard=True,
+                can_add_phones=True,
+                can_add_accessories=True,
+                can_create_sales=True,
+                can_view_reports=True
+            )
+            db.session.add(admin)
+            
+            # Create limited user
+            limited = User(
+                username='limited',
+                password=generate_password_hash('limited123'),
+                is_admin=False,
+                role='limited',
+                can_access_dashboard=False,
+                can_add_phones=True,
+                can_add_accessories=True,
+                can_create_sales=True,
+                can_view_reports=False
+            )
+            db.session.add(limited)
+            
+            db.session.commit()
+            print("Admin and limited users created successfully!")
+            
         except Exception as e:
             print(f"Error creating users: {e}")
-            print("Running database migration...")
-            # If that fails, run migration
+            db.session.rollback()
+            # Try alternative approach
             try:
-                from migrate_db import migrate_database
-                migrate_database()
-            except Exception as migration_error:
-                print(f"Migration failed: {migration_error}")
-                # Last resort: recreate everything
-                print("Recreating database...")
-                db.drop_all()
-                db.create_all()
                 create_admin_user()
                 create_limited_user()
+            except Exception as alt_error:
+                print(f"Alternative user creation failed: {alt_error}")
     
     # Check if running in production
     if os.environ.get('PORT'):
