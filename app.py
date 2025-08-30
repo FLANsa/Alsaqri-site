@@ -14,6 +14,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.lib.pagesizes import A4
 from io import BytesIO
+import arabic_reshaper
+from bidi.algorithm import get_display
 
 # VAT Configuration for Saudi Arabia
 VAT_RATE = 0.15  # 15% VAT rate
@@ -563,6 +565,12 @@ def download_barcode_pdf(phone_number):
         flash('الهاتف غير موجود', 'error')
         return redirect(url_for('dashboard'))
     
+    # Function to process Arabic text for PDF
+    def process_arabic_text(text):
+        reshaped_text = arabic_reshaper.reshape(text)
+        bidi_text = get_display(reshaped_text)
+        return bidi_text
+    
     # Create PDF with exact sticker dimensions (6cm x 3cm)
     buffer = BytesIO()
     p = canvas.Canvas(buffer, pagesize=(6*cm, 3*cm))
@@ -571,10 +579,11 @@ def download_barcode_pdf(phone_number):
     p.setFillColorRGB(1, 1, 1)
     p.rect(0, 0, 6*cm, 3*cm, fill=1)
     
-    # Company name at top - using English text for now
+    # Company name at top - Arabic text
     p.setFillColorRGB(0, 0, 0)
     p.setFont("Helvetica-Bold", 8)
-    p.drawCentredString(3*cm, 2.6*cm, "ALSAQRI COMMUNICATIONS")
+    company_name = process_arabic_text("الصقري للإتصالات")
+    p.drawCentredString(3*cm, 2.6*cm, company_name)
     
     # Barcode in center
     if phone.barcode_path and os.path.exists(phone.barcode_path):
@@ -593,25 +602,28 @@ def download_barcode_pdf(phone_number):
         # Clean up temp file
         os.remove(temp_path)
     
-    # Device details at bottom - using English labels
+    # Device details at bottom - Arabic labels
     p.setFont("Helvetica", 6)
     
     # Device number
-    p.drawString(0.5*cm, 0.8*cm, "Device:")
+    device_label = process_arabic_text("رقم الجهاز:")
+    p.drawString(0.5*cm, 0.8*cm, device_label)
     p.setFont("Helvetica-Bold", 6)
     p.drawString(0.5*cm, 0.6*cm, phone.phone_number)
     
     # Battery percentage
     p.setFont("Helvetica", 6)
     battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-    p.drawString(2.5*cm, 0.8*cm, "Battery:")
+    battery_label = process_arabic_text("نسبة البطارية:")
+    p.drawString(2.5*cm, 0.8*cm, battery_label)
     p.setFont("Helvetica-Bold", 6)
     p.drawString(2.5*cm, 0.6*cm, battery_value)
     
     # Memory
     p.setFont("Helvetica", 6)
     memory_value = phone.phone_memory if phone.phone_memory else "512"
-    p.drawString(4.5*cm, 0.8*cm, "Memory:")
+    memory_label = process_arabic_text("الذاكرة:")
+    p.drawString(4.5*cm, 0.8*cm, memory_label)
     p.setFont("Helvetica-Bold", 6)
     p.drawString(4.5*cm, 0.6*cm, memory_value)
     
