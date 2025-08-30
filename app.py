@@ -242,7 +242,8 @@ def health_check():
     """Health check endpoint for online deployment"""
     try:
         # Test database connection
-        db.session.execute('SELECT 1')
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
         return jsonify({
             'status': 'healthy',
             'database': 'connected',
@@ -254,6 +255,17 @@ def health_check():
             'database': 'error',
             'error': str(e)
         }), 500
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle internal server errors gracefully"""
+    db.session.rollback()
+    return render_template('error.html', error="Database error. Please try again."), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors"""
+    return render_template('error.html', error="Page not found."), 404
 
 @app.route('/favicon.ico')
 def favicon():
