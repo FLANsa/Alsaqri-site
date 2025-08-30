@@ -62,7 +62,7 @@
     background: white;
     border: 1px solid #ddd;
     border-radius: 4px;
-    padding: 8px;
+    padding: 6px;
     max-width: 500px;
     margin: 0 auto;
     width: 5cm;
@@ -71,6 +71,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    box-sizing: border-box;
 }
 
 .sticker-left {
@@ -78,15 +79,17 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding-right: 8px;
+    padding-right: 6px;
+    height: 100%;
 }
 
 .sticker-header {
     text-align: center;
-    font-size: 8px;
-    margin-bottom: 4px;
+    font-size: 7px;
+    margin-bottom: 3px;
     border-bottom: 1px solid #eee;
-    padding-bottom: 2px;
+    padding-bottom: 1px;
+    font-weight: bold;
 }
 
 .sticker-barcode {
@@ -95,7 +98,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-left: 8px;
+    padding-left: 6px;
+    height: 100%;
 }
 
 .sticker-barcode img {
@@ -105,32 +109,39 @@
 }
 
 .sticker-info {
-    font-size: 6px;
-    margin-top: 4px;
+    font-size: 5px;
+    margin-top: 2px;
+    flex: 1;
 }
 
 .sticker-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 1px;
+    margin-bottom: 0;
+    height: 100%;
+    align-items: center;
 }
 
 .sticker-field {
     flex: 1;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .sticker-label {
     font-weight: bold;
     color: #333;
-    font-size: 5px;
-    margin-bottom: 1px;
+    font-size: 4px;
+    margin-bottom: 0;
 }
 
 .sticker-value {
     color: #333;
     font-weight: bold;
-    font-size: 7px;
+    font-size: 6px;
 }
 
 @media print {
@@ -150,22 +161,24 @@
     }
     .sticker-content {
         border: none;
-        padding: 2px;
+        padding: 1px;
         max-width: none;
         background: white;
         width: 5cm;
         height: 2cm;
+        box-sizing: border-box;
     }
     .sticker-left {
         flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding-right: 4px;
+        padding-right: 2px;
+        height: 100%;
     }
     .sticker-header {
-        font-size: 6px;
-        margin-bottom: 2px;
+        font-size: 5px;
+        margin-bottom: 1px;
         text-align: center;
         font-weight: bold;
     }
@@ -175,7 +188,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding-left: 4px;
+        padding-left: 2px;
+        height: 100%;
     }
     .sticker-barcode img {
         width: 100%;
@@ -185,28 +199,35 @@
         margin: 0 auto;
     }
     .sticker-info {
-        margin-top: 2px;
-        font-size: 4px;
+        margin-top: 1px;
+        font-size: 3px;
+        flex: 1;
     }
     .sticker-row {
         display: flex;
         justify-content: space-between;
         margin-bottom: 0;
+        height: 100%;
+        align-items: center;
     }
     .sticker-field {
         flex: 1;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     .sticker-label {
         font-weight: bold;
         color: #333;
-        font-size: 3px;
+        font-size: 2px;
         margin-bottom: 0;
     }
     .sticker-value {
         color: #333;
         font-weight: bold;
-        font-size: 5px;
+        font-size: 4px;
     }
 }
 </style>
