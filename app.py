@@ -622,34 +622,28 @@ def download_barcode_pdf(phone_number):
                 sticker_img.paste(barcode_img, (barcode_x, barcode_y))
             
             # Device details at bottom - مطابق للصفحة
-            # Use a better font for English text
-            try:
-                detail_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 16)
-            except:
-                try:
-                    detail_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 16)
-                except:
-                    detail_font = ImageFont.load_default()
+            # Use the same Arabic font for all text
+            detail_font = arabic_font
             
             # Calculate positions for 3 columns like in page
             col_width = width_px // 3
             start_y = height_px - 60
             
             # Device number - Column 1
-            device_label = "Device"
+            device_label = "رقم الجهاز"
             device_value = phone.phone_number
             draw.text((col_width//2 - 20, start_y), device_label, fill='black', font=detail_font)
             draw.text((col_width//2 - 20, start_y + 20), device_value, fill='black', font=detail_font)
             
             # Battery percentage - Column 2
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-            battery_label = "Battery"
+            battery_label = "نسبة البطارية"
             draw.text((col_width + col_width//2 - 20, start_y), battery_label, fill='black', font=detail_font)
             draw.text((col_width + col_width//2 - 20, start_y + 20), battery_value, fill='black', font=detail_font)
             
             # Memory - Column 3
             memory_value = phone.phone_memory if phone.phone_memory else "512"
-            memory_label = "Memory"
+            memory_label = "الذاكرة"
             draw.text((2*col_width + col_width//2 - 20, start_y), memory_label, fill='black', font=detail_font)
             draw.text((2*col_width + col_width//2 - 20, start_y + 20), memory_value, fill='black', font=detail_font)
             
