@@ -185,6 +185,7 @@ class SaleItem(db.Model):
     
     # Pricing (التسعير)
     unit_price = db.Column(db.Float, nullable=False)  # سعر الوحدة قبل الضريبة
+    purchase_price = db.Column(db.Float, nullable=False, default=0.0)  # سعر الشراء قبل الضريبة
     quantity = db.Column(db.Integer, nullable=False, default=1)
     total_price = db.Column(db.Float, nullable=False)  # السعر الإجمالي للكمية
     
@@ -445,8 +446,18 @@ def dashboard():
     # Calculate sales subtotal and VAT
     total_sales_subtotal = sum(sale.subtotal for sale in Sale.query.all())
     total_vat_amount = sum(sale.vat_amount for sale in Sale.query.all())
-    # Calculate actual profit as the difference between selling and purchase prices
-    total_actual_profit = 0.0  # We'll calculate this differently if needed
+    
+    # Calculate actual profit from completed sales
+    total_actual_profit = 0.0
+    all_sales = Sale.query.all()
+    
+    for sale in all_sales:
+        for item in sale.items:
+            # Calculate profit using stored purchase price
+            selling_price_without_vat = item.unit_price / (1 + VAT_RATE)
+            purchase_price_without_vat = item.purchase_price / (1 + VAT_RATE)
+            profit = selling_price_without_vat - purchase_price_without_vat
+            total_actual_profit += profit * item.quantity
     
     return render_template('dashboard.html', 
                          phones=phones,
@@ -903,27 +914,40 @@ def create_sale():
         
         # Add sale items
         for item_data in data['items']:
-            sale_item = SaleItem(
-                sale_id=sale.id,
-                product_type=item_data['type'],
-                product_name=item_data['name'],
-                product_description=item_data['description'],
-                unit_price=item_data['unitPrice'],
-                quantity=item_data['quantity'],
-                total_price=item_data['totalPrice']
-            )
-            
-            # Add serial number for phones
+            # Get purchase price from the product
+            purchase_price = 0.0
             if item_data['type'] == 'phone':
                 phone = Phone.query.get(item_data['id'])
                 if phone:
+                    purchase_price = phone.purchase_price
+                    sale_item = SaleItem(
+                        sale_id=sale.id,
+                        product_type=item_data['type'],
+                        product_name=item_data['name'],
+                        product_description=item_data['description'],
+                        unit_price=item_data['unitPrice'],
+                        purchase_price=purchase_price,
+                        quantity=item_data['quantity'],
+                        total_price=item_data['totalPrice']
+                    )
                     sale_item.serial_number = phone.serial_number
                     # Remove phone from inventory
                     db.session.delete(phone)
             elif item_data['type'] in ['accessory', 'charger', 'case', 'screen_protector']:
-                # Update accessory stock
                 accessory = Accessory.query.get(item_data['id'])
                 if accessory:
+                    purchase_price = accessory.purchase_price
+                    sale_item = SaleItem(
+                        sale_id=sale.id,
+                        product_type=item_data['type'],
+                        product_name=item_data['name'],
+                        product_description=item_data['description'],
+                        unit_price=item_data['unitPrice'],
+                        purchase_price=purchase_price,
+                        quantity=item_data['quantity'],
+                        total_price=item_data['totalPrice']
+                    )
+                    # Update accessory stock
                     accessory.quantity_in_stock -= item_data['quantity']
                     if accessory.quantity_in_stock < 0:
                         accessory.quantity_in_stock = 0
