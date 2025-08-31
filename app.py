@@ -645,7 +645,8 @@ def generate_barcode(phone_number, battery_age=None):
         return barcode_path
     except Exception as e:
         print(f"Error in generate_barcode: {str(e)}")
-        raise e
+        # Return a default path if barcode generation fails
+        return f"static/barcodes/{phone_number}.png"
 
 @app.route('/barcode/<phone_number>')
 @login_required
@@ -893,7 +894,11 @@ def add_new_phone():
                 return redirect(url_for('add_new_phone'))
             
             # Generate barcode automatically
-            barcode_path = generate_barcode(phone_number=phone_number)
+            try:
+                barcode_path = generate_barcode(phone_number=phone_number)
+            except Exception as e:
+                print(f"Barcode generation failed: {str(e)}")
+                barcode_path = None
             
             new_phone = Phone(
                 brand=brand,
@@ -999,7 +1004,11 @@ def add_used_phone():
                 return redirect(url_for('add_used_phone'))
             
             # Generate barcode automatically (phone number only)
-            barcode_path = generate_barcode(phone_number=phone_number)
+            try:
+                barcode_path = generate_barcode(phone_number=phone_number)
+            except Exception as e:
+                print(f"Barcode generation failed: {str(e)}")
+                barcode_path = None
             
             used_phone = Phone(
                 brand=brand,
