@@ -386,6 +386,33 @@ def update_iphone_brand_name():
         print(f"Error updating iPhone brand name: {e}")
         return False
 
+def regenerate_all_barcodes():
+    """Regenerate all existing barcodes with smaller size"""
+    try:
+        phones = Phone.query.all()
+        updated_count = 0
+        
+        for phone in phones:
+            if phone.phone_number:
+                print(f'Regenerating barcode for phone: {phone.phone_number}')
+                
+                # Generate new barcode with smaller size
+                new_barcode_path = generate_barcode(phone.phone_number)
+                
+                # Update the phone record with new barcode path
+                phone.barcode_path = new_barcode_path
+                updated_count += 1
+        
+        # Commit all changes
+        db.session.commit()
+        print(f"Successfully updated {updated_count} barcodes to smaller size!")
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error regenerating barcodes: {e}")
+        return False
+
 def initialize_database():
     """Initialize database with proper error handling"""
     try:
@@ -649,9 +676,9 @@ def download_barcode_pdf(phone_number):
         def create_complete_sticker_image():
             from PIL import Image, ImageDraw, ImageFont
             
-            # Create image with exact dimensions (5cm x 2.5cm at 300 DPI)
-            width_px = int(5 * 118.11)  # 5cm at 300 DPI (reduced from 6cm)
-            height_px = int(2.5 * 118.11)  # 2.5cm at 300 DPI (reduced from 3cm)
+            # Create image with exact dimensions (4cm x 2cm at 300 DPI)
+            width_px = int(4 * 118.11)  # 4cm at 300 DPI (reduced from 5cm)
+            height_px = int(2 * 118.11)  # 2cm at 300 DPI (reduced from 2.5cm)
             
             # Create white background
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
@@ -682,10 +709,10 @@ def download_barcode_pdf(phone_number):
             company_text = "الصقري للإتصالات"
             # Use smaller font for company name to fit smaller sticker
             try:
-                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 120)
+                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 80)
             except:
                 try:
-                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 120)
+                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 80)
                 except:
                     company_font = arabic_font
             
@@ -699,9 +726,9 @@ def download_barcode_pdf(phone_number):
             # Barcode in center - مطابق للصفحة
             if phone.barcode_path and os.path.exists(phone.barcode_path):
                 barcode_img = Image.open(phone.barcode_path)
-                # Resize barcode to 75% width for smaller sticker
-                barcode_width = int(width_px * 0.75)  # 75% of sticker width (reduced from 80%)
-                barcode_height = int(0.8 * 118.11)  # 0.8cm height (reduced from 1cm)
+                # Resize barcode to 70% width for smaller sticker
+                barcode_width = int(width_px * 0.70)  # 70% of sticker width (reduced from 75%)
+                barcode_height = int(0.6 * 118.11)  # 0.6cm height (reduced from 0.8cm)
                 barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
                 
                 # Paste barcode in center
@@ -718,7 +745,7 @@ def download_barcode_pdf(phone_number):
             start_y = height_px - 70
             
             # Use smaller font for details
-            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 6) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
+            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 4) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
             
             # Device number - Column 1
             device_label = "رقم الجهاز"
@@ -1695,6 +1722,25 @@ def update_iphone_brand_route():
             flash('تم تحديث اسم العلامة التجارية من آيفون إلى ابل بنجاح', 'success')
         else:
             flash('لم يتم العثور على بيانات آيفون للتحديث', 'info')
+    except Exception as e:
+        flash(f'حدث خطأ: {str(e)}', 'error')
+    
+    return redirect(url_for('dashboard'))
+
+@app.route('/regenerate_barcodes')
+@login_required
+def regenerate_barcodes_route():
+    """Route to regenerate all barcodes with smaller size"""
+    if not current_user.is_admin:
+        flash('غير مصرح لك بالوصول لهذه الصفحة', 'error')
+        return redirect(url_for('dashboard'))
+    
+    try:
+        success = regenerate_all_barcodes()
+        if success:
+            flash('تم إعادة إنشاء جميع الباركود بحجم أصغر بنجاح', 'success')
+        else:
+            flash('حدث خطأ في إعادة إنشاء الباركود', 'error')
     except Exception as e:
         flash(f'حدث خطأ: {str(e)}', 'error')
     

@@ -215,6 +215,11 @@
                             </a>
                         </div>
                         <div class="col-md-2 mb-2">
+                            <a href="{{ url_for('regenerate_barcodes_route') }}" class="btn btn-warning btn-lg w-100" onclick="return confirm('هل تريد إعادة إنشاء جميع الباركود بالحجم الجديد الأصغر؟')">
+                                <i class="fas fa-qrcode"></i><br>تحديث الباركود
+                            </a>
+                        </div>
+                        <div class="col-md-2 mb-2">
                             <a href="{{ url_for('add_used_phone') }}" class="btn btn-dark btn-lg w-100">
                                 <i class="fas fa-mobile-alt"></i><br>إضافة هاتف مستعمل
                             </a>
