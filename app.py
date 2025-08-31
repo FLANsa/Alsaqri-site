@@ -819,15 +819,15 @@ def download_barcode_pdf(phone_number):
             value_font = fit_font(draw, device_val,  max_col_w, start_size=96, min_size=56)
 
             # Column 1
-            center_text(draw, c1, baseline_y - int(3.6 * PX_PER_MM), detail_label, label_font)
+            center_text(draw, c1, baseline_y - int(2.8 * PX_PER_MM), detail_label, label_font)
             center_text(draw, c1, baseline_y - int(0.8 * PX_PER_MM), device_val,  value_font)
 
             # Column 2
-            center_text(draw, c2, baseline_y - int(3.6 * PX_PER_MM), battery_label, label_font)
+            center_text(draw, c2, baseline_y - int(2.8 * PX_PER_MM), battery_label, label_font)
             center_text(draw, c2, baseline_y - int(0.8 * PX_PER_MM), battery_val,  value_font)
 
             # Column 3
-            center_text(draw, c3, baseline_y - int(3.6 * PX_PER_MM), memory_label, label_font)
+            center_text(draw, c3, baseline_y - int(2.8 * PX_PER_MM), memory_label, label_font)
             center_text(draw, c3, baseline_y - int(0.8 * PX_PER_MM), memory_val,  value_font)
 
             return sticker_img
