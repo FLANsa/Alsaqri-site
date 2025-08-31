@@ -633,12 +633,12 @@ def generate_barcode(phone_number, battery_age=None):
     filename = f"static/barcodes/{phone_number}"
     barcode_path = barcode_instance.save(filename, options)
     
-    # Convert the saved image to smaller sticker size (5cm x 2.5cm - more compact)
+    # Convert the saved image to smaller sticker size (4cm x 2cm - more compact)
     img = Image.open(barcode_path)
     # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(5.0 * 37.795276)   # 5cm width (reduced from 6cm)
-    height_px = int(2.5 * 37.795276)  # 2.5cm height (reduced from 3cm)
-    img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
+    width_px = int(4.0 * 37.795276)   # 4cm width (reduced from 5cm)
+    height_px = int(2.0 * 37.795276)  # 2cm height (reduced from 2.5cm)
+    img = img.resize((width_px, height_px), Image.LANCZOS)
     img.save(barcode_path)
     
     return barcode_path
@@ -727,7 +727,7 @@ def download_barcode_pdf(phone_number):
                 # Resize barcode to 70% width for smaller sticker
                 barcode_width = int(width_px * 0.70)  # 70% of sticker width (reduced from 75%)
                 barcode_height = int(0.6 * 118.11)  # 0.6cm height (reduced from 0.8cm)
-                barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
+                barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.LANCZOS)
                 
                 # Paste barcode with fine-tuned positioning
                 barcode_x = (width_px - barcode_width) // 2 - int(0.4 * 118.11)  # Move 0.4cm to the left (0.5 - 0.1)
