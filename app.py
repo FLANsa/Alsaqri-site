@@ -773,16 +773,16 @@ def download_barcode_pdf(phone_number):
             # Device number - Column 1
             device_label = "رقم الجهاز"
             device_value = phone.phone_number
-            # Center text in column with more spacing
+            # Center text in column with labels above values
             bbox1 = draw.textbbox((0, 0), device_label, font=detail_font_small)
             label_width1 = bbox1[2] - bbox1[0]
             x1 = col_width//2 - label_width1//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x1, start_y), device_label, fill='black', font=detail_font_small)
+            draw.text((x1, start_y - 15), device_label, fill='black', font=detail_font_small)  # Label positioned above
             
             bbox1_val = draw.textbbox((0, 0), device_value, font=detail_font_small)
             value_width1 = bbox1_val[2] - bbox1_val[0]
             x1_val = col_width//2 - value_width1//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x1_val, start_y + 20), device_value, fill='black', font=detail_font_small)  # Doubled spacing
+            draw.text((x1_val, start_y + 5), device_value, fill='black', font=detail_font_small)  # Value positioned below label
             
             # Battery percentage - Column 2
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
@@ -790,12 +790,12 @@ def download_barcode_pdf(phone_number):
             bbox2 = draw.textbbox((0, 0), battery_label, font=detail_font_small)
             label_width2 = bbox2[2] - bbox2[0]
             x2 = col_width + col_width//2 - label_width2//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x2, start_y), battery_label, fill='black', font=detail_font_small)
+            draw.text((x2, start_y - 15), battery_label, fill='black', font=detail_font_small)  # Label positioned above
             
             bbox2_val = draw.textbbox((0, 0), battery_value, font=detail_font_small)
             value_width2 = bbox2_val[2] - bbox2_val[0]
             x2_val = col_width + col_width//2 - value_width2//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x2_val, start_y + 20), battery_value, fill='black', font=detail_font_small)  # Doubled spacing
+            draw.text((x2_val, start_y + 5), battery_value, fill='black', font=detail_font_small)  # Value positioned below label
             
             # Memory - Column 3
             memory_value = phone.phone_memory if phone.phone_memory else "512"
@@ -803,12 +803,12 @@ def download_barcode_pdf(phone_number):
             bbox3 = draw.textbbox((0, 0), memory_label, font=detail_font_small)
             label_width3 = bbox3[2] - bbox3[0]
             x3 = 2*col_width + col_width//2 - label_width3//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x3, start_y), memory_label, fill='black', font=detail_font_small)
+            draw.text((x3, start_y - 15), memory_label, fill='black', font=detail_font_small)  # Label positioned above
             
             bbox3_val = draw.textbbox((0, 0), memory_value, font=detail_font_small)
             value_width3 = bbox3_val[2] - bbox3_val[0]
             x3_val = 2*col_width + col_width//2 - value_width3//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x3_val, start_y + 20), memory_value, fill='black', font=detail_font_small)  # Doubled spacing
+            draw.text((x3_val, start_y + 5), memory_value, fill='black', font=detail_font_small)  # Value positioned below label
             
             return sticker_img
         
