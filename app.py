@@ -1940,46 +1940,7 @@ def search():
                          search_type=search_type,
                          condition=condition)
 
-@app.route('/customers')
-@login_required
-def list_customers():
-    """List all customers with their details from sales"""
-    # Get all sales with customer information
-    sales = Sale.query.filter(
-        Sale.customer_name.isnot(None),
-        Sale.customer_name != ''
-    ).order_by(Sale.date_created.desc()).all()
-    
-    # Create a dictionary to store unique customers
-    customers = {}
-    
-    for sale in sales:
-        customer_key = f"{sale.customer_name}_{sale.customer_phone}"
-        
-        if customer_key not in customers:
-            customers[customer_key] = {
-                'name': sale.customer_name,
-                'phone': sale.customer_phone,
-                'email': sale.customer_email,
-                'address': sale.customer_address,
-                'first_purchase_date': sale.date_created,
-                'last_purchase_date': sale.date_created,
-                'total_purchases': 1,
-                'total_amount': sale.total_amount,
-                'sales': [sale]
-            }
-        else:
-            # Update existing customer
-            customers[customer_key]['last_purchase_date'] = sale.date_created
-            customers[customer_key]['total_purchases'] += 1
-            customers[customer_key]['total_amount'] += sale.total_amount
-            customers[customer_key]['sales'].append(sale)
-    
-    # Convert to list and sort by last purchase date
-    customers_list = list(customers.values())
-    customers_list.sort(key=lambda x: x['last_purchase_date'], reverse=True)
-    
-    return render_template('customers.html', customers=customers_list)
+
 
 @app.route('/sales')
 @login_required
