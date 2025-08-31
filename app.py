@@ -433,56 +433,7 @@ def add_common_phone_types():
         db.session.rollback()
         print(f"Error adding common phone types: {e}")
 
-def update_iphone_brand_name():
-    """Update iPhone brand name from 'آيفون' to 'ابل'"""
-    try:
-        # Update existing "آيفون" entries to "ابل"
-        existing_iphone_types = PhoneType.query.filter_by(brand="آيفون").all()
-        updated_count = 0
-        
-        for phone_type in existing_iphone_types:
-            phone_type.brand = "ابل"
-            updated_count += 1
-        
-        if updated_count > 0:
-            db.session.commit()
-            print(f"Successfully updated {updated_count} iPhone entries from 'آيفون' to 'ابل'")
-            return True
-        else:
-            print("No 'آيفون' entries found to update")
-            return False
-            
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error updating iPhone brand name: {e}")
-        return False
 
-def regenerate_all_barcodes():
-    """Regenerate all existing barcodes with smaller size"""
-    try:
-        phones = Phone.query.all()
-        updated_count = 0
-        
-        for phone in phones:
-            if phone.phone_number:
-                print(f'Regenerating barcode for phone: {phone.phone_number}')
-                
-                # Generate new barcode with smaller size
-                new_barcode_path = generate_barcode(phone.phone_number)
-                
-                # Update the phone record with new barcode path
-                phone.barcode_path = new_barcode_path
-                updated_count += 1
-        
-        # Commit all changes
-        db.session.commit()
-        print(f"Successfully updated {updated_count} barcodes to smaller size!")
-        return True
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error regenerating barcodes: {e}")
-        return False
 
 def initialize_database():
     """Initialize database with proper error handling"""
@@ -1750,94 +1701,7 @@ def get_accessory_categories_ajax():
     except Exception as e:
         return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'})
 
-@app.route('/add_common_phones')
-@login_required
-def add_common_phones_route():
-    """Route to manually add common phone types"""
-    if not current_user.is_admin:
-        flash('غير مصرح لك بالوصول لهذه الصفحة', 'error')
-        return redirect(url_for('dashboard'))
-    
-    try:
-        add_common_phone_types()
-        flash('تم إضافة الهواتف الشائعة بنجاح', 'success')
-    except Exception as e:
-        flash(f'حدث خطأ: {str(e)}', 'error')
-    
-    return redirect(url_for('dashboard'))
 
-@app.route('/update_iphone_brand')
-@login_required
-def update_iphone_brand_route():
-    """Route to update iPhone brand name from 'آيفون' to 'ابل'"""
-    if not current_user.is_admin:
-        flash('غير مصرح لك بالوصول لهذه الصفحة', 'error')
-        return redirect(url_for('dashboard'))
-    
-    try:
-        success = update_iphone_brand_name()
-        if success:
-            flash('تم تحديث اسم العلامة التجارية من آيفون إلى ابل بنجاح', 'success')
-        else:
-            flash('لم يتم العثور على بيانات آيفون للتحديث', 'info')
-    except Exception as e:
-        flash(f'حدث خطأ: {str(e)}', 'error')
-    
-    return redirect(url_for('dashboard'))
-
-@app.route('/regenerate_barcodes')
-@login_required
-def regenerate_barcodes_route():
-    """Route to regenerate all barcodes with smaller size"""
-    if not current_user.is_admin:
-        flash('غير مصرح لك بالوصول لهذه الصفحة', 'error')
-        return redirect(url_for('dashboard'))
-    
-    try:
-        success = regenerate_all_barcodes()
-        if success:
-            flash('تم إعادة إنشاء جميع الباركود بحجم أصغر بنجاح', 'success')
-        else:
-            flash('حدث خطأ في إعادة إنشاء الباركود', 'error')
-    except Exception as e:
-        flash(f'حدث خطأ: {str(e)}', 'error')
-    
-    return redirect(url_for('dashboard'))
-
-@app.route('/view_barcodes')
-@login_required
-def view_barcodes():
-    """View all barcodes with search and filter functionality"""
-    try:
-        # Get search parameters
-        search = request.args.get('search', '')
-        brand_filter = request.args.get('brand', '')
-        condition_filter = request.args.get('condition', '')
-        
-        # Build query
-        query = Phone.query
-        
-        # Apply filters
-        if search:
-            query = query.filter(Phone.phone_number.contains(search))
-        if brand_filter:
-            query = query.filter(Phone.brand == brand_filter)
-        if condition_filter:
-            query = query.filter(Phone.condition == condition_filter)
-        
-        # Get all phones with barcodes
-        phones = query.order_by(Phone.phone_number).all()
-        
-        # Get unique brands for filter dropdown
-        brands = db.session.query(Phone.brand).distinct().all()
-        brands = [brand[0] for brand in brands if brand[0]]
-        
-        return render_template('view_barcodes.html', 
-                             phones=phones, 
-                             brands=brands)
-    except Exception as e:
-        flash(f'حدث خطأ في عرض الباركود: {str(e)}', 'error')
-        return redirect(url_for('dashboard'))
 
 # sell_phone route removed - replaced by comprehensive sales system
 
