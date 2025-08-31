@@ -66,7 +66,7 @@
                         <div class="col-md-8">
                             <label for="barcode_search" class="form-label">البحث بالباركود</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="barcode_search" placeholder="أدخل الباركود للبحث عن المنتج">
+                                <input type="text" class="form-control" id="barcode_search" placeholder="أدخل الباركود للبحث عن المنتج" onkeypress="if(event.keyCode==13) searchByBarcode()">
                                 <button class="btn btn-outline-primary" type="button" onclick="searchByBarcode()">
                                     <i class="fas fa-search"></i> بحث
                                 </button>
@@ -177,9 +177,14 @@ function searchByBarcode() {
         return;
     }
     
-    // Search in phones
+    console.log('Searching for barcode:', barcode);
+    console.log('Available phones:', products);
+    console.log('Available accessories:', accessories);
+    
+    // Search in phones (exact match)
     const phone = products.find(p => p.phone_number === barcode);
     if (phone) {
+        console.log('Found phone:', phone);
         // Set product type to phone
         document.getElementById('product_type').value = 'phone';
         loadProducts();
@@ -196,9 +201,10 @@ function searchByBarcode() {
         return;
     }
     
-    // Search in accessories
+    // Search in accessories (exact match)
     const accessory = accessories.find(a => a.barcode === barcode);
     if (accessory) {
+        console.log('Found accessory:', accessory);
         // Determine product type based on category
         let productType = 'accessory';
         if (accessory.category === 'charger') productType = 'charger';
@@ -221,8 +227,38 @@ function searchByBarcode() {
         return;
     }
     
-    // If not found
-    alert('لم يتم العثور على منتج بهذا الباركود');
+    // Try partial search for accessories (in case barcode is truncated)
+    const partialAccessory = accessories.find(a => a.barcode && a.barcode.includes(barcode));
+    if (partialAccessory) {
+        console.log('Found accessory (partial match):', partialAccessory);
+        // Determine product type based on category
+        let productType = 'accessory';
+        if (partialAccessory.category === 'charger') productType = 'charger';
+        else if (partialAccessory.category === 'case') productType = 'case';
+        else if (partialAccessory.category === 'screen_protector') productType = 'screen_protector';
+        
+        // Set product type
+        document.getElementById('product_type').value = productType;
+        loadProducts();
+        
+        // Find and select the accessory in dropdown
+        const productSelect = document.getElementById('product_select');
+        for (let i = 0; i < productSelect.options.length; i++) {
+            if (productSelect.options[i].value == partialAccessory.id) {
+                productSelect.selectedIndex = i;
+                updateProductInfo();
+                break;
+            }
+        }
+        return;
+    }
+    
+    // If not found, show detailed error
+    console.log('No product found with barcode:', barcode);
+    console.log('Available barcodes:');
+    console.log('Phones:', products.map(p => p.phone_number));
+    console.log('Accessories:', accessories.map(a => a.barcode));
+    alert('لم يتم العثور على منتج بهذا الباركود: ' + barcode);
 }
 
 function loadProducts() {
