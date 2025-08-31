@@ -1784,6 +1784,41 @@ def regenerate_barcodes_route():
     
     return redirect(url_for('dashboard'))
 
+@app.route('/view_barcodes')
+@login_required
+def view_barcodes():
+    """View all barcodes with search and filter functionality"""
+    try:
+        # Get search parameters
+        search = request.args.get('search', '')
+        brand_filter = request.args.get('brand', '')
+        condition_filter = request.args.get('condition', '')
+        
+        # Build query
+        query = Phone.query
+        
+        # Apply filters
+        if search:
+            query = query.filter(Phone.phone_number.contains(search))
+        if brand_filter:
+            query = query.filter(Phone.brand == brand_filter)
+        if condition_filter:
+            query = query.filter(Phone.condition == condition_filter)
+        
+        # Get all phones with barcodes
+        phones = query.order_by(Phone.phone_number).all()
+        
+        # Get unique brands for filter dropdown
+        brands = db.session.query(Phone.brand).distinct().all()
+        brands = [brand[0] for brand in brands if brand[0]]
+        
+        return render_template('view_barcodes.html', 
+                             phones=phones, 
+                             brands=brands)
+    except Exception as e:
+        flash(f'حدث خطأ في عرض الباركود: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
 # sell_phone route removed - replaced by comprehensive sales system
 
 if __name__ == '__main__':
