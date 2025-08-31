@@ -250,6 +250,14 @@ def create_limited_user():
 def add_common_phone_types():
     """Add common phone brands and models to the database"""
     try:
+        # First, update existing "آيفون" entries to "ابل"
+        existing_iphone_types = PhoneType.query.filter_by(brand="آيفون").all()
+        for phone_type in existing_iphone_types:
+            phone_type.brand = "ابل"
+        db.session.commit()
+        if existing_iphone_types:
+            print(f"Updated {len(existing_iphone_types)} existing iPhone entries from 'آيفون' to 'ابل'")
+        
         # Check if phone types already exist
         existing_count = PhoneType.query.count()
         if existing_count > 0:
@@ -260,7 +268,7 @@ def add_common_phone_types():
         
         # Common phone brands and models popular in Saudi Arabia
         common_phones = {
-            "آيفون": [
+            "ابل": [
                 "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15",
                 "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14",
                 "iPhone 13 Pro Max", "iPhone 13 Pro", "iPhone 13", "iPhone 13 mini",
@@ -353,6 +361,30 @@ def add_common_phone_types():
     except Exception as e:
         db.session.rollback()
         print(f"Error adding common phone types: {e}")
+
+def update_iphone_brand_name():
+    """Update iPhone brand name from 'آيفون' to 'ابل'"""
+    try:
+        # Update existing "آيفون" entries to "ابل"
+        existing_iphone_types = PhoneType.query.filter_by(brand="آيفون").all()
+        updated_count = 0
+        
+        for phone_type in existing_iphone_types:
+            phone_type.brand = "ابل"
+            updated_count += 1
+        
+        if updated_count > 0:
+            db.session.commit()
+            print(f"Successfully updated {updated_count} iPhone entries from 'آيفون' to 'ابل'")
+            return True
+        else:
+            print("No 'آيفون' entries found to update")
+            return False
+            
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating iPhone brand name: {e}")
+        return False
 
 def initialize_database():
     """Initialize database with proper error handling"""
@@ -1644,6 +1676,25 @@ def add_common_phones_route():
     try:
         add_common_phone_types()
         flash('تم إضافة الهواتف الشائعة بنجاح', 'success')
+    except Exception as e:
+        flash(f'حدث خطأ: {str(e)}', 'error')
+    
+    return redirect(url_for('dashboard'))
+
+@app.route('/update_iphone_brand')
+@login_required
+def update_iphone_brand_route():
+    """Route to update iPhone brand name from 'آيفون' to 'ابل'"""
+    if not current_user.is_admin:
+        flash('غير مصرح لك بالوصول لهذه الصفحة', 'error')
+        return redirect(url_for('dashboard'))
+    
+    try:
+        success = update_iphone_brand_name()
+        if success:
+            flash('تم تحديث اسم العلامة التجارية من آيفون إلى ابل بنجاح', 'success')
+        else:
+            flash('لم يتم العثور على بيانات آيفون للتحديث', 'info')
     except Exception as e:
         flash(f'حدث خطأ: {str(e)}', 'error')
     
