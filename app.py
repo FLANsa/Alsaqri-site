@@ -608,40 +608,44 @@ def limited_dashboard():
 
 def generate_barcode(phone_number, battery_age=None):
     """Generate barcode for phone with sticker design"""
-    # Use only phone number in barcode (remove battery age)
-    barcode_data = phone_number
-    
-    # Create barcode with phone number only
-    barcode_class = barcode.get_barcode_class('code128')
-    barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
-    
-    # Set custom options for the barcode (optimized for smaller sticker)
-    options = {
-        'module_width': 0.15,  # Width of each bar (reduced from 0.2)
-        'module_height': 6,    # Height of the barcode (reduced from 8)
-        'font_size': 0,        # Hide the text below barcode
-        'text_distance': 0.3,  # Distance between barcode and text (reduced from 0.5)
-        'quiet_zone': 0.3,     # Quiet zone around the barcode (reduced from 0.5)
-        'dpi': 203            # DPI optimized for thermal printers
-    }
-    
-    # Create barcodes directory if it doesn't exist
-    if not os.path.exists('static/barcodes'):
-        os.makedirs('static/barcodes')
-    
-    # Save barcode image with custom options
-    filename = f"static/barcodes/{phone_number}"
-    barcode_path = barcode_instance.save(filename, options)
-    
-    # Convert the saved image to smaller sticker size (4cm x 2cm - more compact)
-    img = Image.open(barcode_path)
-    # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(4.0 * 37.795276)   # 4cm width (reduced from 5cm)
-    height_px = int(2.0 * 37.795276)  # 2cm height (reduced from 2.5cm)
-    img = img.resize((width_px, height_px), Image.LANCZOS)
-    img.save(barcode_path)
-    
-    return barcode_path
+    try:
+        # Use only phone number in barcode (remove battery age)
+        barcode_data = phone_number
+        
+        # Create barcode with phone number only
+        barcode_class = barcode.get_barcode_class('code128')
+        barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
+        
+        # Set custom options for the barcode (optimized for smaller sticker)
+        options = {
+            'module_width': 0.15,  # Width of each bar (reduced from 0.2)
+            'module_height': 6,    # Height of the barcode (reduced from 8)
+            'font_size': 0,        # Hide the text below barcode
+            'text_distance': 0.3,  # Distance between barcode and text (reduced from 0.5)
+            'quiet_zone': 0.3,     # Quiet zone around the barcode (reduced from 0.5)
+            'dpi': 203            # DPI optimized for thermal printers
+        }
+        
+        # Create barcodes directory if it doesn't exist
+        if not os.path.exists('static/barcodes'):
+            os.makedirs('static/barcodes')
+        
+        # Save barcode image with custom options
+        filename = f"static/barcodes/{phone_number}"
+        barcode_path = barcode_instance.save(filename, options)
+        
+        # Convert the saved image to smaller sticker size (4cm x 2cm - more compact)
+        img = Image.open(barcode_path)
+        # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
+        width_px = int(4.0 * 37.795276)   # 4cm width (reduced from 5cm)
+        height_px = int(2.0 * 37.795276)  # 2cm height (reduced from 2.5cm)
+        img = img.resize((width_px, height_px), Image.LANCZOS)
+        img.save(barcode_path)
+        
+        return barcode_path
+    except Exception as e:
+        print(f"Error in generate_barcode: {str(e)}")
+        raise e
 
 @app.route('/barcode/<phone_number>')
 @login_required
@@ -939,6 +943,7 @@ def add_new_phone():
             return redirect(url_for('add_new_phone'))
         except Exception as e:
             db.session.rollback()
+            print(f"Error in add_new_phone: {str(e)}")
             flash(f'حدث خطأ: {str(e)}', 'error')
             return redirect(url_for('add_new_phone'))
     
@@ -1044,6 +1049,7 @@ def add_used_phone():
             return redirect(url_for('add_used_phone'))
         except Exception as e:
             db.session.rollback()
+            print(f"Error in add_used_phone: {str(e)}")
             flash(f'حدث خطأ: {str(e)}', 'error')
             return redirect(url_for('add_used_phone'))
     
