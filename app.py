@@ -7,7 +7,7 @@ from sqlalchemy import func
 import random
 import barcode
 from barcode.writer import ImageWriter
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import argparse
 from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.pdfgen import canvas
@@ -16,6 +16,66 @@ from reportlab.lib.pagesizes import A4
 from io import BytesIO
 import arabic_reshaper
 from bidi.algorithm import get_display
+import os
+
+# Arabic detection (so we only reshape when needed)
+ARABIC_BLOCKS = [
+    ('\u0600', '\u06FF'),
+    ('\u0750', '\u077F'),
+    ('\u08A0', '\u08FF'),
+    ('\uFB50', '\uFDFF'),
+    ('\uFE70', '\uFEFF'),
+]
+LRM = '\u200E'  # left-to-right mark for numbers
+
+def contains_arabic(s: str) -> bool:
+    for ch in s:
+        for lo, hi in ARABIC_BLOCKS:
+            if lo <= ch <= hi:
+                return True
+    return False
+
+def ar_text(text: str) -> str:
+    """Shape & reorder only when the string contains Arabic; force RTL base direction."""
+    if contains_arabic(text):
+        shaped = arabic_reshaper.reshape(text)
+        return get_display(shaped, base_dir='R')
+    return text  # leave numbers/Latin as-is
+
+FONT_CANDIDATES = [
+    "static/fonts/NotoNaskhArabic-Regular.ttf",
+    "static/fonts/NotoKufiArabic-Regular.ttf",
+    "static/fonts/Amiri-Regular.ttf",
+    "C:/Windows/Fonts/arial.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+    "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
+    "/usr/share/fonts/truetype/noto/NotoKufiArabic-Regular.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+]
+
+def load_font(size: int) -> ImageFont.FreeTypeFont:
+    for p in FONT_CANDIDATES:
+        if os.path.exists(p):
+            try:
+                return ImageFont.truetype(p, size)
+            except Exception:
+                pass
+    raise RuntimeError("Arabic-capable TTF font not found. Add NotoNaskhArabic-Regular.ttf under static/fonts/")
+
+def fit_font(draw: ImageDraw.ImageDraw, text: str, max_width_px: int, start_size: int, min_size: int = 28):
+    size = start_size
+    while size >= min_size:
+        f = load_font(size)
+        bbox = draw.textbbox((0, 0), text, font=f)
+        if (bbox[2] - bbox[0]) <= max_width_px:
+            return f
+        size -= 2
+    return load_font(min_size)
+
+def center_text(draw, x_center, y, text, font, fill="black", stroke_width=0):
+    b = draw.textbbox((0, 0), text, font=font)
+    draw.text((x_center - (b[2] - b[0]) // 2, y), text, fill=fill, font=font,
+              stroke_width=stroke_width, stroke_fill=fill)
 
 # VAT Configuration for Saudi Arabia
 VAT_RATE = 0.15  # 15% VAT rate
@@ -682,120 +742,81 @@ def download_barcode_pdf(phone_number):
     try:
         # Create complete sticker image first
         def create_complete_sticker_image():
-            from PIL import Image, ImageDraw, ImageFont
-            import arabic_reshaper
-            from bidi.algorithm import get_display
-            
-            # Define constants for 600 DPI
+            # 600 DPI canvas
             DPI = 600
             MM_PER_IN = 25.4
             PX_PER_MM = DPI / MM_PER_IN
             W_MM, H_MM = 40, 25
             width_px = int(W_MM * PX_PER_MM)
             height_px = int(H_MM * PX_PER_MM)
-            
-            # Create white background
+
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
             draw = ImageDraw.Draw(sticker_img)
-            
-            # Font candidates for Arabic support
-            FONT_CANDIDATES = [
-                "C:/Windows/Fonts/arial.ttf",
-                "/System/Library/Fonts/Arial.ttf",
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-            ]
-            
-            def load_font(size):
-                for p in FONT_CANDIDATES:
-                    if os.path.exists(p):
-                        return ImageFont.truetype(p, size)
-                return ImageFont.load_default()
-            
-            def shape_ar(text):
-                # Proper shaping for Arabic
-                return get_display(arabic_reshaper.reshape(text))
-            
-            def fit_font(draw, text, max_width_px, start_size, min_size=24):
-                size = start_size
-                while size >= min_size:
-                    f = load_font(size)
-                    bbox = draw.textbbox((0,0), text, font=f)
-                    if (bbox[2]-bbox[0]) <= max_width_px:
-                        return f
-                    size -= 2
-                return load_font(min_size)
-            
-            def center_text(x_center, y, text, font):
-                b = draw.textbbox((0,0), text, font=font)
-                draw.text((x_center - (b[2]-b[0])//2, y), text, fill="black", font=font)
-            
-            # Company name - much larger and auto-fit to ~95% of label width
-            company_text = shape_ar("الصقري للاتصالات")
-            margin_px = int(1.0 * PX_PER_MM)  # tighter margins -> bigger text
-            max_company_w = int(width_px * 0.95)  # up to 95% of width
+
+            # === 1) Company header (very large, RTL-correct) ===
+            company_text = ar_text("الصقري للاتصالات")
+            margin_px = int(1.0 * PX_PER_MM)
+            max_company_w = int(width_px * 0.95)
             company_font = fit_font(draw, company_text, max_company_w, start_size=220, min_size=80)
-            cb = draw.textbbox((0,0), company_text, font=company_font)
-            cx = (width_px - (cb[2]-cb[0])) // 2
-            cy = int(1.5 * PX_PER_MM)
-            # bolder header using stroke
-            draw.text((cx, cy), company_text, fill="black", font=company_font, stroke_width=2, stroke_fill="black")
-            
-            # Barcode - larger size for better readability
+            cb = draw.textbbox((0, 0), company_text, font=company_font)
+            cx = width_px // 2
+            cy = int(1.4 * PX_PER_MM)
+            # draw bold by using stroke
+            center_text(draw, cx, cy, company_text, company_font, stroke_width=2)
+
+            # === 2) Barcode (bigger) ===
+            # Expect an already-generated image path in phone.barcode_path (outer scope)
             if phone.barcode_path and os.path.exists(phone.barcode_path):
-                try:
-                    barcode_img = Image.open(phone.barcode_path)
-                    # Larger barcode: ~14 mm tall and ~90% of label width
-                    target_bar_w = int(width_px * 0.90)
-                    target_bar_h = int(14 * PX_PER_MM)  # 14mm tall
-                    barcode_img = barcode_img.resize((target_bar_w, target_bar_h), Image.LANCZOS)
-                    bar_x = (width_px - target_bar_w)//2
-                    # place 1mm under the header
-                    bar_y = cb[3] + int(1.0 * PX_PER_MM)
-                    sticker_img.paste(barcode_img, (bar_x, bar_y))
-                    print(f"Barcode pasted successfully at ({bar_x}, {bar_y}) with size ({target_bar_w}, {target_bar_h})")
-                except Exception as e:
-                    print(f"Error pasting barcode: {str(e)}")
+                barcode_img = Image.open(phone.barcode_path)
+                target_bar_w = int(width_px * 0.90)
+                target_bar_h = int(14 * PX_PER_MM)  # 14 mm tall
+                barcode_img = barcode_img.resize((target_bar_w, target_bar_h), Image.LANCZOS)
+                bar_x = (width_px - target_bar_w) // 2
+                bar_y = cb[3] + int(1.0 * PX_PER_MM)
+                sticker_img.paste(barcode_img, (bar_x, bar_y))
             else:
-                print(f"Barcode path not found: {phone.barcode_path}")
-                # Create a simple barcode placeholder
+                # simple fallback pattern
                 target_bar_w = int(width_px * 0.90)
                 target_bar_h = int(14 * PX_PER_MM)
-                bar_x = (width_px - target_bar_w)//2
+                bar_x = (width_px - target_bar_w) // 2
                 bar_y = cb[3] + int(1.0 * PX_PER_MM)
-                # Draw a simple barcode pattern
                 for i in range(0, target_bar_w, 8):
                     draw.rectangle([bar_x + i, bar_y, bar_x + i + 4, bar_y + target_bar_h], fill='black')
-                print(f"Created placeholder barcode at ({bar_x}, {bar_y})")
-            
-            # Bottom details - larger and balanced across 3 columns
-            detail_label = shape_ar("رقم الجهاز")
-            battery_label = shape_ar("نسبة البطارية")
-            memory_label = shape_ar("الذاكرة")
-            device_val = shape_ar(str(phone.phone_number))
-            battery_val = shape_ar(str(phone.age) if phone.condition=="used" and phone.age else "100")
-            memory_val = shape_ar(phone.phone_memory if phone.phone_memory else "512")
-            
+
+            # === 3) Bottom details (larger) ===
+            # Labels (Arabic, RTL)
+            detail_label  = ar_text("رقم الجهاز")
+            battery_label = ar_text("نسبة البطارية")
+            memory_label  = ar_text("الذاكرة")
+
+            # Values (numbers stay LTR; wrap with LRM)
+            device_val  = LRM + (str(phone.phone_number) if phone.phone_number else "") + LRM
+            battery_val = LRM + (str(phone.age) if (phone.condition == "used" and phone.age) else "100") + LRM
+            memory_val  = LRM + (phone.phone_memory if phone.phone_memory else "512") + LRM
+
             col_w = width_px // 3
-            baseline_y = height_px - int(4.0 * PX_PER_MM)  # closer to bottom
-            
-            label_font = fit_font(draw, detail_label, col_w-2*margin_px, start_size=68, min_size=44)
-            value_font = fit_font(draw, device_val, col_w-2*margin_px, start_size=84, min_size=56)
-            
-            # column centers
-            c1 = col_w//2 + 0
-            c2 = col_w + col_w//2
-            c3 = 2*col_w + col_w//2
-            
-            # labels above, values below
-            center_text(c1, baseline_y - int(3.4*PX_PER_MM), detail_label, label_font)
-            center_text(c1, baseline_y - int(0.8*PX_PER_MM), device_val, value_font)
-            
-            center_text(c2, baseline_y - int(3.4*PX_PER_MM), battery_label, label_font)
-            center_text(c2, baseline_y - int(0.8*PX_PER_MM), battery_val, value_font)
-            
-            center_text(c3, baseline_y - int(3.4*PX_PER_MM), memory_label, label_font)
-            center_text(c3, baseline_y - int(0.8*PX_PER_MM), memory_val, value_font)
-            
+            c1 = col_w // 2
+            c2 = col_w + col_w // 2
+            c3 = 2 * col_w + col_w // 2
+
+            baseline_y = height_px - int(4.2 * PX_PER_MM)
+
+            # Make labels & values bigger
+            label_font = fit_font(draw, detail_label, col_w - 2 * margin_px, start_size=80, min_size=44)
+            value_font = fit_font(draw, device_val,  col_w - 2 * margin_px, start_size=96, min_size=56)
+
+            # Column 1
+            center_text(draw, c1, baseline_y - int(3.6 * PX_PER_MM), detail_label, label_font)
+            center_text(draw, c1, baseline_y - int(0.8 * PX_PER_MM), device_val,  value_font)
+
+            # Column 2
+            center_text(draw, c2, baseline_y - int(3.6 * PX_PER_MM), battery_label, label_font)
+            center_text(draw, c2, baseline_y - int(0.8 * PX_PER_MM), battery_val,  value_font)
+
+            # Column 3
+            center_text(draw, c3, baseline_y - int(3.6 * PX_PER_MM), memory_label, label_font)
+            center_text(draw, c3, baseline_y - int(0.8 * PX_PER_MM), memory_val,  value_font)
+
             return sticker_img
         
         # Create the complete sticker image
