@@ -28,6 +28,7 @@
                         <tr>
                             <th>الاسم</th>
                             <th>الفئة</th>
+                            <th>الباركود</th>
                             <th>الكمية</th>
                             <th>سعر الشراء</th>
                             <th>سعر البيع</th>
@@ -54,6 +55,13 @@
                                 {% endif %}
                             </td>
                             <td>
+                                {% if accessory.barcode %}
+                                    <code class="text-primary">{{ accessory.barcode }}</code>
+                                {% else %}
+                                    <span class="text-muted">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td>
                                 <span class="badge bg-success">{{ accessory.quantity_in_stock }}</span>
                             </td>
                             <td>
@@ -72,6 +80,12 @@
                             <td>{{ accessory.date_added.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 <div class="btn-group" role="group">
+                                    {% if accessory.barcode %}
+                                    <a href="{{ url_for('print_accessory_barcode', barcode=accessory.barcode) }}" 
+                                       class="btn btn-sm btn-outline-success" title="طباعة الباركود">
+                                        <i class="fas fa-barcode"></i>
+                                    </a>
+                                    {% endif %}
                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="editAccessory({{ accessory.id }})">
                                         <i class="fas fa-edit"></i>
                                     </button>

@@ -742,6 +742,15 @@ def print_barcode(phone_number):
         return redirect(url_for('dashboard'))
     return render_template('print_barcode.html', phone=phone)
 
+@app.route('/print_accessory_barcode/<barcode>')
+@login_required
+def print_accessory_barcode(barcode):
+    accessory = Accessory.query.filter_by(barcode=barcode).first()
+    if not accessory:
+        flash('الأكسسوار غير موجود', 'error')
+        return redirect(url_for('dashboard'))
+    return render_template('print_accessory_barcode.html', accessory=accessory)
+
 @app.route('/download_barcode_pdf/<phone_number>')
 @login_required
 def download_barcode_pdf(phone_number):
@@ -774,7 +783,7 @@ def download_accessory_barcode_pdf(barcode):
 
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
             draw = ImageDraw.Draw(sticker_img)
-
+            
             # === 1) Company header (smaller, RTL-correct) ===
             company_text = ar_text_simple("الصقري للاتصالات")
             margin_px = int(1.0 * PX_PER_MM)
@@ -967,9 +976,9 @@ def download_accessory_barcode_pdf(barcode):
             center_text(draw, c1, baseline_y - int(0.8 * PX_PER_MM), device_val, value_font)
             center_text(draw, c2, baseline_y - int(0.8 * PX_PER_MM), battery_val, value_font)
             center_text(draw, c3, baseline_y - int(0.8 * PX_PER_MM), memory_val, value_font)
-
+            
             return sticker_img
-
+        
         # Create the complete sticker image
         sticker_img = create_complete_sticker_image()
         
@@ -1013,7 +1022,7 @@ def generate_unique_phone_number():
     else:
         # Convert the highest phone number to integer and increment
         try:
-            next_number = int(highest_phone) + 1
+        next_number = int(highest_phone) + 1
         except ValueError:
             # If there's an issue with the phone number format, start from 1
             next_number = 1
@@ -1078,7 +1087,7 @@ def add_new_phone():
             
             # Generate barcode automatically
             try:
-                barcode_path = generate_barcode(phone_number=phone_number)
+            barcode_path = generate_barcode(phone_number=phone_number)
             except Exception as e:
                 print(f"Barcode generation failed: {str(e)}")
                 barcode_path = None

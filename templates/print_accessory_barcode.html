@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}طباعة باركود الأكسسوار{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-barcode"></i> طباعة باركود الأكسسوار</h2>
+        <div>
+            <a href="{{ url_for('list_accessories') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> العودة لقائمة الأكسسوارات
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print"></i> طباعة
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-box"></i> معلومات الأكسسوار</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>اسم الأكسسوار:</strong> {{ accessory.name }}</p>
+                            <p><strong>الفئة:</strong> {{ accessory.category }}</p>
+                            <p><strong>الباركود:</strong> {{ accessory.barcode }}</p>
+                            <p><strong>السعر:</strong> {{ "%.2f"|format(accessory.selling_price_with_vat) }} ريال</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>المخزون:</strong> {{ accessory.quantity_in_stock }}</p>
+                            <p><strong>المورد:</strong> {{ accessory.supplier or 'غير محدد' }}</p>
+                            <p><strong>تاريخ الإضافة:</strong> {{ accessory.date_added.strftime('%Y-%m-%d') if accessory.date_added else 'غير محدد' }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if accessory.description %}
+                    <div class="mt-3">
+                        <p><strong>الوصف:</strong></p>
+                        <p>{{ accessory.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Barcode Display -->
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-barcode"></i> الباركود</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if accessory.barcode_path %}
+                        <img src="{{ url_for('static', filename=accessory.barcode_path) }}" 
+                             alt="Barcode for {{ accessory.barcode }}" 
+                             class="img-fluid" 
+                             style="max-width: 300px;">
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            صورة الباركود غير متوفرة
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <p class="text-muted">باركود: {{ accessory.barcode }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Download PDF Button -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <a href="{{ url_for('download_accessory_barcode_pdf', barcode=accessory.barcode) }}" 
+                       class="btn btn-success btn-lg">
+                        <i class="fas fa-download"></i> تحميل PDF للطباعة
+                    </a>
+                    <p class="text-muted mt-2">
+                        <i class="fas fa-info-circle"></i>
+                        حجم PDF: 40mm × 25mm - مناسب للطباعة على الملصقات
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, .d-flex {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+    }
+}
+</style>
+{% endblock %}
