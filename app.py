@@ -609,6 +609,8 @@ def limited_dashboard():
 def generate_barcode(phone_number, battery_age=None):
     """Generate barcode for phone with sticker design"""
     try:
+        print(f"Generating barcode for phone number: {phone_number}")
+        
         # Use only phone number in barcode (remove battery age)
         barcode_data = phone_number
         
@@ -629,10 +631,12 @@ def generate_barcode(phone_number, battery_age=None):
         # Create barcodes directory if it doesn't exist
         if not os.path.exists('static/barcodes'):
             os.makedirs('static/barcodes')
+            print("Created barcodes directory")
         
         # Save barcode image with custom options
         filename = f"static/barcodes/{phone_number}"
         barcode_path = barcode_instance.save(filename, options)
+        print(f"Barcode saved to: {barcode_path}")
         
         # Convert the saved image to smaller sticker size (4cm x 2cm - more compact)
         img = Image.open(barcode_path)
@@ -641,6 +645,7 @@ def generate_barcode(phone_number, battery_age=None):
         height_px = int(2.0 * 37.795276)  # 2cm height (reduced from 2.5cm)
         img = img.resize((width_px, height_px), Image.LANCZOS)
         img.save(barcode_path)
+        print(f"Barcode resized and saved successfully")
         
         return barcode_path
     except Exception as e:
@@ -845,11 +850,15 @@ def generate_unique_phone_number():
     highest_phone = db.session.query(func.max(Phone.phone_number)).scalar()
     
     if highest_phone is None:
-        # If no phones exist, start from 1
+        # If no phones exist, start from 000001
         next_number = 1
     else:
         # Convert the highest phone number to integer and increment
-        next_number = int(highest_phone) + 1
+        try:
+            next_number = int(highest_phone) + 1
+        except ValueError:
+            # If there's an issue with the phone number format, start from 1
+            next_number = 1
     
     # Check if we've reached the limit
     if next_number > 100000:
@@ -857,6 +866,7 @@ def generate_unique_phone_number():
     
     # Format the number with leading zeros to make it 6 digits
     phone_number = f"{next_number:06d}"
+    print(f"Generated phone number: {phone_number}")
     return phone_number
 
 
