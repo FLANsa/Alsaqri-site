@@ -590,13 +590,13 @@ def generate_barcode(phone_number, battery_age=None):
     barcode_class = barcode.get_barcode_class('code128')
     barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
     
-    # Set custom options for the barcode (optimized for 2x5cm sticker)
+    # Set custom options for the barcode (optimized for smaller sticker)
     options = {
-        'module_width': 0.2,   # Width of each bar
-        'module_height': 8,    # Height of the barcode
-        'font_size': 6,        # Font size for the number
-        'text_distance': 0.5,  # Distance between barcode and text
-        'quiet_zone': 0.5,     # Quiet zone around the barcode
+        'module_width': 0.15,  # Width of each bar (reduced from 0.2)
+        'module_height': 6,    # Height of the barcode (reduced from 8)
+        'font_size': 5,        # Font size for the number (reduced from 6)
+        'text_distance': 0.3,  # Distance between barcode and text (reduced from 0.5)
+        'quiet_zone': 0.3,     # Quiet zone around the barcode (reduced from 0.5)
         'dpi': 203            # DPI optimized for thermal printers
     }
     
@@ -608,11 +608,11 @@ def generate_barcode(phone_number, battery_age=None):
     filename = f"static/barcodes/{phone_number}"
     barcode_path = barcode_instance.save(filename, options)
     
-    # Convert the saved image to sticker size (6cm x 3cm - compact layout)
+    # Convert the saved image to smaller sticker size (5cm x 2.5cm - more compact)
     img = Image.open(barcode_path)
     # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
-    width_px = int(6.0 * 37.795276)   # 6cm width
-    height_px = int(3.0 * 37.795276)  # 3cm height
+    width_px = int(5.0 * 37.795276)   # 5cm width (reduced from 6cm)
+    height_px = int(2.5 * 37.795276)  # 2.5cm height (reduced from 3cm)
     img = img.resize((width_px, height_px), Image.Resampling.LANCZOS)
     img.save(barcode_path)
     
@@ -649,9 +649,9 @@ def download_barcode_pdf(phone_number):
         def create_complete_sticker_image():
             from PIL import Image, ImageDraw, ImageFont
             
-            # Create image with exact dimensions (6cm x 3cm at 300 DPI)
-            width_px = int(6 * 118.11)  # 6cm at 300 DPI
-            height_px = int(3 * 118.11)  # 3cm at 300 DPI
+            # Create image with exact dimensions (5cm x 2.5cm at 300 DPI)
+            width_px = int(5 * 118.11)  # 5cm at 300 DPI (reduced from 6cm)
+            height_px = int(2.5 * 118.11)  # 2.5cm at 300 DPI (reduced from 3cm)
             
             # Create white background
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
@@ -680,12 +680,12 @@ def download_barcode_pdf(phone_number):
             
             # Company name at top - مطابق للصفحة
             company_text = "الصقري للإتصالات"
-            # Use much larger font for company name - تحسين تحميل الخط
+            # Use smaller font for company name to fit smaller sticker
             try:
-                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 160)
+                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 120)
             except:
                 try:
-                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 160)
+                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 120)
                 except:
                     company_font = arabic_font
             
@@ -699,9 +699,9 @@ def download_barcode_pdf(phone_number):
             # Barcode in center - مطابق للصفحة
             if phone.barcode_path and os.path.exists(phone.barcode_path):
                 barcode_img = Image.open(phone.barcode_path)
-                # Resize barcode to 80% width like in page
-                barcode_width = int(width_px * 0.8)  # 80% of sticker width
-                barcode_height = int(1 * 118.11)  # 1cm height
+                # Resize barcode to 75% width for smaller sticker
+                barcode_width = int(width_px * 0.75)  # 75% of sticker width (reduced from 80%)
+                barcode_height = int(0.8 * 118.11)  # 0.8cm height (reduced from 1cm)
                 barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
                 
                 # Paste barcode in center
@@ -718,7 +718,7 @@ def download_barcode_pdf(phone_number):
             start_y = height_px - 70
             
             # Use smaller font for details
-            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 8) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
+            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 6) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
             
             # Device number - Column 1
             device_label = "رقم الجهاز"
