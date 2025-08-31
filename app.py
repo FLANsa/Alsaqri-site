@@ -764,11 +764,11 @@ def download_barcode_pdf(phone_number):
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
             draw = ImageDraw.Draw(sticker_img)
 
-            # === 1) Company header (very large, RTL-correct) ===
+            # === 1) Company header (smaller, RTL-correct) ===
             company_text = ar_text_simple("الصقري للاتصالات")
             margin_px = int(1.0 * PX_PER_MM)
-            max_company_w = int(width_px * 0.95)
-            company_font = fit_font(draw, company_text, max_company_w, start_size=220, min_size=80)
+            max_company_w = int(width_px * 0.90)
+            company_font = fit_font(draw, company_text, max_company_w, start_size=160, min_size=60)
             cb = draw.textbbox((0, 0), company_text, font=company_font)
             cx = width_px // 2
             cy = int(1.4 * PX_PER_MM)
