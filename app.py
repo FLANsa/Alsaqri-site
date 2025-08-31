@@ -729,29 +729,28 @@ def download_barcode_pdf(phone_number):
                 b = draw.textbbox((0,0), text, font=font)
                 draw.text((x_center - (b[2]-b[0])//2, y), text, fill="black", font=font)
             
-            # Company name - much larger and auto-fit to ~90% of label width
+            # Company name - much larger and auto-fit to ~95% of label width
             company_text = shape_ar("الصقري للاتصالات")
-            margin_px = int(2.0 * PX_PER_MM)  # 2mm margin
-            max_company_w = width_px - 2*margin_px
-            # Start big; will shrink to fit
-            company_font = fit_font(draw, company_text, max_company_w, start_size=160)
+            margin_px = int(1.0 * PX_PER_MM)  # tighter margins -> bigger text
+            max_company_w = int(width_px * 0.95)  # up to 95% of width
+            company_font = fit_font(draw, company_text, max_company_w, start_size=220, min_size=80)
             cb = draw.textbbox((0,0), company_text, font=company_font)
             cx = (width_px - (cb[2]-cb[0])) // 2
-            cy = int(2.0 * PX_PER_MM)  # ~2mm from top
-            draw.text((cx, cy), company_text, fill="black", font=company_font)
+            cy = int(1.5 * PX_PER_MM)
+            # bolder header using stroke
+            draw.text((cx, cy), company_text, fill="black", font=company_font, stroke_width=2, stroke_fill="black")
             
             # Barcode - larger size for better readability
             if phone.barcode_path and os.path.exists(phone.barcode_path):
                 try:
                     barcode_img = Image.open(phone.barcode_path)
-                    # Target ~12 mm tall and ~85% of label width
-                    target_bar_w = int(width_px * 0.85)
-                    target_bar_h = int(12 * PX_PER_MM)  # 12mm tall
+                    # Larger barcode: ~14 mm tall and ~90% of label width
+                    target_bar_w = int(width_px * 0.90)
+                    target_bar_h = int(14 * PX_PER_MM)  # 14mm tall
                     barcode_img = barcode_img.resize((target_bar_w, target_bar_h), Image.LANCZOS)
-                    
                     bar_x = (width_px - target_bar_w)//2
-                    # place roughly centered vertically under the company name
-                    bar_y = int(height_px*0.45) - target_bar_h//2
+                    # place 1mm under the header
+                    bar_y = cb[3] + int(1.0 * PX_PER_MM)
                     sticker_img.paste(barcode_img, (bar_x, bar_y))
                     print(f"Barcode pasted successfully at ({bar_x}, {bar_y}) with size ({target_bar_w}, {target_bar_h})")
                 except Exception as e:
@@ -759,10 +758,10 @@ def download_barcode_pdf(phone_number):
             else:
                 print(f"Barcode path not found: {phone.barcode_path}")
                 # Create a simple barcode placeholder
-                target_bar_w = int(width_px * 0.85)
-                target_bar_h = int(12 * PX_PER_MM)
+                target_bar_w = int(width_px * 0.90)
+                target_bar_h = int(14 * PX_PER_MM)
                 bar_x = (width_px - target_bar_w)//2
-                bar_y = int(height_px*0.45) - target_bar_h//2
+                bar_y = cb[3] + int(1.0 * PX_PER_MM)
                 # Draw a simple barcode pattern
                 for i in range(0, target_bar_w, 8):
                     draw.rectangle([bar_x + i, bar_y, bar_x + i + 4, bar_y + target_bar_h], fill='black')
@@ -777,10 +776,10 @@ def download_barcode_pdf(phone_number):
             memory_val = shape_ar(phone.phone_memory if phone.phone_memory else "512")
             
             col_w = width_px // 3
-            baseline_y = height_px - int(5.5 * PX_PER_MM)  # ~5.5mm from bottom
+            baseline_y = height_px - int(4.0 * PX_PER_MM)  # closer to bottom
             
-            label_font = fit_font(draw, detail_label, col_w-2*margin_px, start_size=52)   # bigger labels
-            value_font = fit_font(draw, device_val, col_w-2*margin_px, start_size=60)   # even bigger values
+            label_font = fit_font(draw, detail_label, col_w-2*margin_px, start_size=68, min_size=44)
+            value_font = fit_font(draw, device_val, col_w-2*margin_px, start_size=84, min_size=56)
             
             # column centers
             c1 = col_w//2 + 0
@@ -788,14 +787,14 @@ def download_barcode_pdf(phone_number):
             c3 = 2*col_w + col_w//2
             
             # labels above, values below
-            center_text(c1, baseline_y - int(3.2*PX_PER_MM), detail_label, label_font)
-            center_text(c1, baseline_y - int(1.0*PX_PER_MM), device_val, value_font)
+            center_text(c1, baseline_y - int(3.4*PX_PER_MM), detail_label, label_font)
+            center_text(c1, baseline_y - int(0.8*PX_PER_MM), device_val, value_font)
             
-            center_text(c2, baseline_y - int(3.2*PX_PER_MM), battery_label, label_font)
-            center_text(c2, baseline_y - int(1.0*PX_PER_MM), battery_val, value_font)
+            center_text(c2, baseline_y - int(3.4*PX_PER_MM), battery_label, label_font)
+            center_text(c2, baseline_y - int(0.8*PX_PER_MM), battery_val, value_font)
             
-            center_text(c3, baseline_y - int(3.2*PX_PER_MM), memory_label, label_font)
-            center_text(c3, baseline_y - int(1.0*PX_PER_MM), memory_val, value_font)
+            center_text(c3, baseline_y - int(3.4*PX_PER_MM), memory_label, label_font)
+            center_text(c3, baseline_y - int(0.8*PX_PER_MM), memory_val, value_font)
             
             return sticker_img
         
