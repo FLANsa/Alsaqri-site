@@ -722,7 +722,7 @@ def download_barcode_pdf(phone_number):
             bbox = draw.textbbox((0, 0), company_text, font=company_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
-            x = (width_px - text_width) // 2 + int(3 * 11.811)  # Move 0.3cm to the right
+            x = (width_px - text_width) // 2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
             y = 3  # Very top for smaller sticker
             draw.text((x, y), company_text, fill='black', font=company_font)
             
@@ -736,7 +736,7 @@ def download_barcode_pdf(phone_number):
                     barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.LANCZOS)
                     
                     # Paste barcode with fine-tuned positioning - below company name
-                    barcode_x = (width_px - barcode_width) // 2 + int(3 * 11.811)  # Move 0.3cm to the right
+                    barcode_x = (width_px - barcode_width) // 2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
                     barcode_y = 25  # Position below company name
                     sticker_img.paste(barcode_img, (barcode_x, barcode_y))
                     print(f"Barcode pasted successfully at ({barcode_x}, {barcode_y}) with size ({barcode_width}, {barcode_height})")
@@ -747,7 +747,7 @@ def download_barcode_pdf(phone_number):
                 # Create a simple barcode placeholder
                 barcode_width = int(width_px * 0.80)
                 barcode_height = int(10 * 11.811)
-                barcode_x = (width_px - barcode_width) // 2 + int(3 * 11.811)  # Move 0.3cm to the right
+                barcode_x = (width_px - barcode_width) // 2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
                 barcode_y = 25
                 # Draw a simple barcode pattern
                 for i in range(0, barcode_width, 4):
@@ -771,12 +771,12 @@ def download_barcode_pdf(phone_number):
             # Center text in column with more spacing
             bbox1 = draw.textbbox((0, 0), device_label, font=detail_font_small)
             label_width1 = bbox1[2] - bbox1[0]
-            x1 = col_width//2 - label_width1//2 + int(3 * 11.811)  # Move 0.3cm to the right
+            x1 = col_width//2 - label_width1//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
             draw.text((x1, start_y), device_label, fill='black', font=detail_font_small)
             
             bbox1_val = draw.textbbox((0, 0), device_value, font=detail_font_small)
             value_width1 = bbox1_val[2] - bbox1_val[0]
-            x1_val = col_width//2 - value_width1//2 + int(3 * 11.811)  # Move 0.3cm to the right
+            x1_val = col_width//2 - value_width1//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
             draw.text((x1_val, start_y + 10), device_value, fill='black', font=detail_font_small)
             
             # Battery percentage - Column 2
@@ -784,12 +784,12 @@ def download_barcode_pdf(phone_number):
             battery_label = "نسبة البطارية"
             bbox2 = draw.textbbox((0, 0), battery_label, font=detail_font_small)
             label_width2 = bbox2[2] - bbox2[0]
-            x2 = col_width + col_width//2 - label_width2//2 + int(3 * 11.811)  # Move 0.3cm to the right
+            x2 = col_width + col_width//2 - label_width2//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
             draw.text((x2, start_y), battery_label, fill='black', font=detail_font_small)
             
             bbox2_val = draw.textbbox((0, 0), battery_value, font=detail_font_small)
             value_width2 = bbox2_val[2] - bbox2_val[0]
-            x2_val = col_width + col_width//2 - value_width2//2 + int(3 * 11.811)  # Move 0.3cm to the right
+            x2_val = col_width + col_width//2 - value_width2//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
             draw.text((x2_val, start_y + 10), battery_value, fill='black', font=detail_font_small)
             
             # Memory - Column 3
@@ -797,12 +797,12 @@ def download_barcode_pdf(phone_number):
             memory_label = "الذاكرة"
             bbox3 = draw.textbbox((0, 0), memory_label, font=detail_font_small)
             label_width3 = bbox3[2] - bbox3[0]
-            x3 = 2*col_width + col_width//2 - label_width3//2 + int(3 * 11.811)  # Move 0.3cm to the right
+            x3 = 2*col_width + col_width//2 - label_width3//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
             draw.text((x3, start_y), memory_label, fill='black', font=detail_font_small)
             
             bbox3_val = draw.textbbox((0, 0), memory_value, font=detail_font_small)
             value_width3 = bbox3_val[2] - bbox3_val[0]
-            x3_val = 2*col_width + col_width//2 - value_width3//2 + int(3 * 11.811)  # Move 0.3cm to the right
+            x3_val = 2*col_width + col_width//2 - value_width3//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
             draw.text((x3_val, start_y + 10), memory_value, fill='black', font=detail_font_small)
             
             return sticker_img
