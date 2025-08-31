@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم المحدودة{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">مرحباً بك في نظام إدارة الهواتف</h2>
+        </div>
+    </div>
+
+    <!-- Basic Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي الهواتف</h5>
+                    <h2 class="text-primary">{{ total_phones }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي الأكسسوارات</h5>
+                    <h2 class="text-success">{{ total_accessories }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي المنتجات</h5>
+                    <h2 class="text-info">{{ total_items }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>العمليات المتاحة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('add_new_phone') }}" class="btn btn-primary btn-block w-100">
+                                <i class="fas fa-mobile-alt"></i> إضافة هاتف جديد
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('add_used_phone') }}" class="btn btn-warning btn-block w-100">
+                                <i class="fas fa-mobile-alt"></i> إضافة هاتف مستعمل
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('add_accessory') }}" class="btn btn-success btn-block w-100">
+                                <i class="fas fa-headphones"></i> إضافة أكسسوار
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('search') }}" class="btn btn-info btn-block w-100">
+                                <i class="fas fa-search"></i> البحث
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('create_sale') }}" class="btn btn-danger btn-block w-100">
+                                <i class="fas fa-shopping-cart"></i> إنشاء عملية بيع
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('list_sales') }}" class="btn btn-secondary btn-block w-100">
+                                <i class="fas fa-list"></i> قائمة المبيعات
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('list_accessories') }}" class="btn btn-dark btn-block w-100">
+                                <i class="fas fa-boxes"></i> قائمة الأكسسوارات
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('inventory_summary') }}" class="btn btn-outline-primary btn-block w-100">
+                                <i class="fas fa-chart-bar"></i> ملخص المخزون
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Phones -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>أحدث الهواتف المضافة</h5>
+                </div>
+                <div class="card-body">
+                    {% if phones %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>العلامة التجارية</th>
+                                        <th>الموديل</th>
+                                        <th>الحالة</th>
+                                        <th>الرقم التسلسلي</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for phone in phones[:5] %}
+                                    <tr>
+                                        <td>{{ phone.brand }}</td>
+                                        <td>{{ phone.model }}</td>
+                                        <td>
+                                            {% if phone.condition == 'new' %}
+                                                <span class="badge bg-success">جديد</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">مستعمل</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ phone.serial_number }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">لا توجد هواتف مضافة بعد.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Accessories -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>أحدث الأكسسوارات المضافة</h5>
+                </div>
+                <div class="card-body">
+                    {% if accessories %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>الاسم</th>
+                                        <th>الفئة</th>
+                                        <th>الكمية</th>
+                                        <th>السعر</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for accessory in accessories[:5] %}
+                                    <tr>
+                                        <td>{{ accessory.name }}</td>
+                                        <td>{{ accessory.category }}</td>
+                                        <td>{{ accessory.quantity_in_stock }}</td>
+                                        <td>{{ "%.2f"|format(accessory.selling_price_with_vat) }} ريال</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">لا توجد أكسسوارات مضافة بعد.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

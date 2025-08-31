@@ -228,6 +228,25 @@ def create_admin_user():
         print(f"Error creating admin user: {e}")
         db.session.rollback()
 
+def create_limited_user():
+    """Create limited user if it doesn't exist"""
+    try:
+        limited = User.query.filter_by(username='user').first()
+        if not limited:
+            limited = User(
+                username='user', 
+                password=generate_password_hash('user123'), 
+                is_admin=False,
+            )
+            db.session.add(limited)
+            db.session.commit()
+            print("Limited user created successfully!")
+        else:
+            print("Limited user already exists!")
+    except Exception as e:
+        print(f"Error creating limited user: {e}")
+        db.session.rollback()
+
 def initialize_database():
     """Initialize database with proper error handling"""
     try:
@@ -245,6 +264,8 @@ def initialize_database():
     
     # Create admin user
     create_admin_user()
+    # Create limited user
+    create_limited_user()
     return True
 
 # Initialize database on app startup
@@ -261,7 +282,10 @@ with app.app_context():
 def index():
     try:
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard'))
+            if current_user.is_admin:
+                return redirect(url_for('dashboard'))
+            else:
+                return redirect(url_for('limited_dashboard'))
         return render_template('index.html')
     except Exception as e:
         # If there's a database error, show a simple page
@@ -328,6 +352,10 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Check if user is admin, if not redirect to limited dashboard
+    if not current_user.is_admin:
+        return redirect(url_for('limited_dashboard'))
+    
     phones = Phone.query.all()
     accessories = Accessory.query.all()
     
@@ -391,6 +419,25 @@ def dashboard():
                          total_vat_amount=total_vat_amount,
                          total_actual_profit=total_actual_profit,
                          recent_sales=recent_sales)
+
+@app.route('/limited_dashboard')
+@login_required
+def limited_dashboard():
+    """Limited dashboard for non-admin users"""
+    phones = Phone.query.all()
+    accessories = Accessory.query.all()
+    
+    # Basic counts only
+    total_phones = len(phones)
+    total_accessories = sum(acc.quantity_in_stock for acc in accessories)
+    total_items = total_phones + total_accessories
+    
+    return render_template('limited_dashboard.html', 
+                         phones=phones,
+                         accessories=accessories,
+                         total_phones=total_phones,
+                         total_accessories=total_accessories,
+                         total_items=total_items)
 
 # Transactions route removed - replaced by sales system
 
