@@ -731,8 +731,8 @@ def download_barcode_pdf(phone_number):
                 barcode_height = int(0.6 * 118.11)  # 0.6cm height (reduced from 0.8cm)
                 barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
                 
-                # Paste barcode slightly to the left of center
-                barcode_x = (width_px - barcode_width) // 2 - int(0.2 * 118.11)  # Move 0.2cm to the left
+                # Paste barcode further to the left of center
+                barcode_x = (width_px - barcode_width) // 2 - int(0.5 * 118.11)  # Move 0.5cm to the left
                 barcode_y = (height_px - barcode_height) // 2
                 sticker_img.paste(barcode_img, (barcode_x, barcode_y))
             
