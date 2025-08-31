@@ -627,16 +627,15 @@ def dashboard():
     total_sales_subtotal = sum(sale.subtotal for sale in Sale.query.all())
     total_vat_amount = sum(sale.vat_amount for sale in Sale.query.all())
     
-    # Calculate actual profit from completed sales (using VAT-included values)
+    # Calculate actual profit from completed sales
     total_actual_profit = 0.0
     all_sales = Sale.query.all()
     
     for sale in all_sales:
         for item in sale.items:
-            # Calculate profit using VAT-included prices
-            selling_price_with_vat = item.unit_price * (1 + VAT_RATE)
-            purchase_price_with_vat = item.purchase_price * (1 + VAT_RATE)
-            profit = selling_price_with_vat - purchase_price_with_vat
+            # Calculate profit: (selling price - purchase price) × quantity
+            # Both prices are already stored without VAT
+            profit = item.unit_price - item.purchase_price
             total_actual_profit += profit * item.quantity
     
     return render_template('dashboard.html', 
