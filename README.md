@@ -1,4 +1,21 @@
-# 📱 Phone Shop Management System
+# Phone Shop Management System
+
+A comprehensive phone shop management system built with Flask, featuring inventory management, sales tracking, and financial reporting.
+
+## Features
+
+- 📱 **Phone Inventory Management**: Add new and used phones with detailed specifications
+- 💰 **Sales Tracking**: Complete sales system with VAT calculations
+- 📊 **Financial Reports**: Comprehensive financial analytics and reporting
+- 🏷️ **Barcode Generation**: Automatic barcode generation for each phone
+- 👥 **Multi-User System**: Admin and limited user access levels
+- 🔍 **Search & Filter**: Advanced search capabilities across inventory
+- 📄 **Invoice Generation**: Professional invoice creation and printing
+- 📱 **Common Phone Models**: Pre-populated with 201+ popular phone models from 9 major brands
+
+## Latest Update
+
+✅ **Added 201 common phone models** from major brands including iPhone, Samsung, Huawei, Xiaomi, Oppo, Vivo, OnePlus, Realme, Nokia, and Honor.
 
 ## 🎯 Overview
 A comprehensive phone shop management system built with Flask, featuring inventory management, sales tracking, and thermal receipt printing capabilities.
