@@ -1476,6 +1476,13 @@ def create_sale_page():
     phones = Phone.query.all()
     accessories = Accessory.query.all()
     
+    # Get accessory categories for dropdown
+    accessory_categories = AccessoryCategory.query.all()
+    
+    # Get phone brands for dropdown
+    phone_brands = db.session.query(PhoneType.brand).distinct().all()
+    phone_brands = [brand[0] for brand in phone_brands]
+    
     # Convert Phone objects to dictionaries for JSON serialization
     phones_data = []
     for phone in phones:
@@ -1502,7 +1509,11 @@ def create_sale_page():
             'quantity_in_stock': accessory.quantity_in_stock
         })
     
-    return render_template('create_sale.html', phones=phones_data, accessories=accessories_data)
+    return render_template('create_sale.html', 
+                         phones=phones_data, 
+                         accessories=accessories_data,
+                         accessory_categories=accessory_categories,
+                         phone_brands=phone_brands)
 
 @app.route('/create_sale', methods=['POST'])
 @login_required

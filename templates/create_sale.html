@@ -80,25 +80,16 @@
                             <label for="product_type" class="form-label">نوع المنتج</label>
                             <select class="form-select" id="product_type" onchange="loadProducts()">
                                 <option value="">اختر نوع المنتج</option>
-                                <option value="phone">هاتف</option>
-                                <option value="charger">شاحن</option>
-                                <option value="case">غلاف</option>
-                                <option value="screen_protector">حماية الشاشة</option>
-                                <option value="headphones">سماعات</option>
-                                <option value="cable">كابل</option>
-                                <option value="holder">حامل</option>
-                                <option value="power_bank">شاحن محمول</option>
-                                <option value="car_charger">شاحن السيارة</option>
-                                <option value="wireless_charger">شاحن لاسلكي</option>
-                                <option value="phone_stand">حامل الهاتف</option>
-                                <option value="bluetooth_speaker">مكبر صوت بلوتوث</option>
-                                <option value="memory_card">بطاقة ذاكرة</option>
-                                <option value="phone_cover">غطاء الهاتف</option>
-                                <option value="phone_holder">حامل الهاتف</option>
-                                <option value="phone_cleaner">منظف الهاتف</option>
-                                <option value="phone_repair_kit">طقم إصلاح الهاتف</option>
-                                <option value="phone_accessories">إكسسوارات الهاتف</option>
-                                <option value="other">أخرى</option>
+                                <optgroup label="الهواتف">
+                                    {% for brand in phone_brands %}
+                                        <option value="phone_{{ brand }}">{{ brand }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="الأكسسوارات">
+                                    {% for category in accessory_categories %}
+                                        <option value="{{ category.name }}">{{ category.arabic_name }}</option>
+                                    {% endfor %}
+                                </optgroup>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -217,8 +208,8 @@ function searchByBarcode() {
     const phone = products.find(p => p.phone_number === barcode);
     if (phone) {
         console.log('Found phone:', phone);
-        // Set product type to phone
-        document.getElementById('product_type').value = 'phone';
+        // Set product type to phone brand
+        document.getElementById('product_type').value = `phone_${phone.brand}`;
         loadProducts();
         
         // Find and select the phone in dropdown
@@ -300,55 +291,34 @@ function loadProducts() {
     // Clear previous options
     productSelect.innerHTML = '<option value="">اختر المنتج</option>';
     
-    if (productType === 'phone') {
-        // Load phones from inventory
+    if (productType.startsWith('phone_')) {
+        // Load phones from inventory by brand
+        const brand = productType.replace('phone_', '');
         products.forEach(phone => {
-            const option = document.createElement('option');
-            option.value = phone.id;
-            option.textContent = `${phone.brand} ${phone.model} - ${phone.serial_number}`;
-            option.setAttribute('data-price', phone.selling_price);
-            option.setAttribute('data-name', `${phone.brand} ${phone.model}`);
-            option.setAttribute('data-description', phone.description || '');
-            productSelect.appendChild(option);
+            if (phone.brand === brand) {
+                const option = document.createElement('option');
+                option.value = phone.id;
+                option.textContent = `${phone.brand} ${phone.model} - ${phone.serial_number}`;
+                option.setAttribute('data-price', phone.selling_price);
+                option.setAttribute('data-name', `${phone.brand} ${phone.model}`);
+                option.setAttribute('data-description', phone.description || '');
+                productSelect.appendChild(option);
+            }
         });
     } else {
         // Load accessories from inventory based on category
-        const categoryMap = {
-            'charger': 'charger',
-            'case': 'case',
-            'screen_protector': 'screen_protector',
-            'headphones': 'headphones',
-            'cable': 'cable',
-            'holder': 'holder',
-            'power_bank': 'power_bank',
-            'car_charger': 'car_charger',
-            'wireless_charger': 'wireless_charger',
-            'phone_stand': 'phone_stand',
-            'bluetooth_speaker': 'bluetooth_speaker',
-            'memory_card': 'memory_card',
-            'phone_cover': 'phone_cover',
-            'phone_holder': 'phone_holder',
-            'phone_cleaner': 'phone_cleaner',
-            'phone_repair_kit': 'phone_repair_kit',
-            'phone_accessories': 'phone_accessories',
-            'other': 'other'
-        };
-        
-        const targetCategory = categoryMap[productType];
-        if (targetCategory) {
-            accessories.forEach(accessory => {
-                if (accessory.category === targetCategory && accessory.quantity_in_stock > 0) {
-                    const option = document.createElement('option');
-                    option.value = accessory.id;
-                    option.textContent = `${accessory.name} (المخزون: ${accessory.quantity_in_stock})`;
-                    option.setAttribute('data-price', accessory.selling_price);
-                    option.setAttribute('data-name', accessory.name);
-                    option.setAttribute('data-description', accessory.description || '');
-                    option.setAttribute('data-stock', accessory.quantity_in_stock);
-                    productSelect.appendChild(option);
-                }
-            });
-        }
+        accessories.forEach(accessory => {
+            if (accessory.category === productType && accessory.quantity_in_stock > 0) {
+                const option = document.createElement('option');
+                option.value = accessory.id;
+                option.textContent = `${accessory.name} (المخزون: ${accessory.quantity_in_stock})`;
+                option.setAttribute('data-price', accessory.selling_price);
+                option.setAttribute('data-name', accessory.name);
+                option.setAttribute('data-description', accessory.description || '');
+                option.setAttribute('data-stock', accessory.quantity_in_stock);
+                productSelect.appendChild(option);
+            }
+        });
     }
 }
 
@@ -416,9 +386,16 @@ function addToCart() {
     }
     
     const selectedOption = productSelect.options[productSelect.selectedIndex];
+    
+    // Determine the actual product type for the backend
+    let actualType = productType;
+    if (productType.startsWith('phone_')) {
+        actualType = 'phone';
+    }
+    
     const product = {
         id: productSelect.value,
-        type: productType,
+        type: actualType,
         name: selectedOption.getAttribute('data-name'),
         description: selectedOption.getAttribute('data-description'),
         unitPrice: customPrice,
