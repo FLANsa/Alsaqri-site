@@ -81,10 +81,23 @@
                             <select class="form-select" id="product_type" onchange="loadProducts()">
                                 <option value="">اختر نوع المنتج</option>
                                 <option value="phone">هاتف</option>
-                                <option value="accessory">إكسسوار</option>
                                 <option value="charger">شاحن</option>
                                 <option value="case">غلاف</option>
                                 <option value="screen_protector">حماية الشاشة</option>
+                                <option value="headphones">سماعات</option>
+                                <option value="cable">كابل</option>
+                                <option value="holder">حامل</option>
+                                <option value="power_bank">شاحن محمول</option>
+                                <option value="car_charger">شاحن السيارة</option>
+                                <option value="wireless_charger">شاحن لاسلكي</option>
+                                <option value="phone_stand">حامل الهاتف</option>
+                                <option value="bluetooth_speaker">مكبر صوت بلوتوث</option>
+                                <option value="memory_card">بطاقة ذاكرة</option>
+                                <option value="phone_cover">غطاء الهاتف</option>
+                                <option value="phone_holder">حامل الهاتف</option>
+                                <option value="phone_cleaner">منظف الهاتف</option>
+                                <option value="phone_repair_kit">طقم إصلاح الهاتف</option>
+                                <option value="phone_accessories">إكسسوارات الهاتف</option>
                                 <option value="other">أخرى</option>
                             </select>
                         </div>
@@ -227,10 +240,7 @@ function searchByBarcode() {
     if (accessory) {
         console.log('Found accessory:', accessory);
         // Determine product type based on category
-        let productType = 'accessory';
-        if (accessory.category === 'charger') productType = 'charger';
-        else if (accessory.category === 'case') productType = 'case';
-        else if (accessory.category === 'screen_protector') productType = 'screen_protector';
+        let productType = accessory.category; // Use the actual category name
         
         // Set product type
         document.getElementById('product_type').value = productType;
@@ -255,10 +265,7 @@ function searchByBarcode() {
     if (partialAccessory) {
         console.log('Found accessory (partial match):', partialAccessory);
         // Determine product type based on category
-        let productType = 'accessory';
-        if (partialAccessory.category === 'charger') productType = 'charger';
-        else if (partialAccessory.category === 'case') productType = 'case';
-        else if (partialAccessory.category === 'screen_protector') productType = 'screen_protector';
+        let productType = partialAccessory.category; // Use the actual category name
         
         // Set product type
         document.getElementById('product_type').value = productType;
@@ -307,10 +314,24 @@ function loadProducts() {
     } else {
         // Load accessories from inventory based on category
         const categoryMap = {
-            'accessory': 'accessory',
             'charger': 'charger',
             'case': 'case',
-            'screen_protector': 'screen_protector'
+            'screen_protector': 'screen_protector',
+            'headphones': 'headphones',
+            'cable': 'cable',
+            'holder': 'holder',
+            'power_bank': 'power_bank',
+            'car_charger': 'car_charger',
+            'wireless_charger': 'wireless_charger',
+            'phone_stand': 'phone_stand',
+            'bluetooth_speaker': 'bluetooth_speaker',
+            'memory_card': 'memory_card',
+            'phone_cover': 'phone_cover',
+            'phone_holder': 'phone_holder',
+            'phone_cleaner': 'phone_cleaner',
+            'phone_repair_kit': 'phone_repair_kit',
+            'phone_accessories': 'phone_accessories',
+            'other': 'other'
         };
         
         const targetCategory = categoryMap[productType];

@@ -437,6 +437,52 @@ def add_common_phone_types():
         db.session.rollback()
         print(f"Error adding common phone types: {e}")
 
+def add_common_accessory_categories():
+    """Add common accessory categories to database"""
+    try:
+        # Check if categories already exist
+        existing_categories = AccessoryCategory.query.count()
+        if existing_categories > 0:
+            print(f"Accessory categories already exist ({existing_categories} entries). Skipping initialization.")
+            return
+        
+        # Common accessory categories
+        common_categories = [
+            {'name': 'charger', 'arabic_name': 'شاحن'},
+            {'name': 'case', 'arabic_name': 'غلاف'},
+            {'name': 'screen_protector', 'arabic_name': 'حماية الشاشة'},
+            {'name': 'headphones', 'arabic_name': 'سماعات'},
+            {'name': 'cable', 'arabic_name': 'كابل'},
+            {'name': 'holder', 'arabic_name': 'حامل'},
+            {'name': 'power_bank', 'arabic_name': 'شاحن محمول'},
+            {'name': 'car_charger', 'arabic_name': 'شاحن السيارة'},
+            {'name': 'wireless_charger', 'arabic_name': 'شاحن لاسلكي'},
+            {'name': 'phone_stand', 'arabic_name': 'حامل الهاتف'},
+            {'name': 'bluetooth_speaker', 'arabic_name': 'مكبر صوت بلوتوث'},
+            {'name': 'memory_card', 'arabic_name': 'بطاقة ذاكرة'},
+            {'name': 'phone_cover', 'arabic_name': 'غطاء الهاتف'},
+            {'name': 'phone_holder', 'arabic_name': 'حامل الهاتف'},
+            {'name': 'phone_cleaner', 'arabic_name': 'منظف الهاتف'},
+            {'name': 'phone_repair_kit', 'arabic_name': 'طقم إصلاح الهاتف'},
+            {'name': 'phone_accessories', 'arabic_name': 'إكسسوارات الهاتف'},
+            {'name': 'other', 'arabic_name': 'أخرى'}
+        ]
+        
+        for category_data in common_categories:
+            category = AccessoryCategory(
+                name=category_data['name'],
+                arabic_name=category_data['arabic_name'],
+                description=f"فئة {category_data['arabic_name']} للأكسسوارات"
+            )
+            db.session.add(category)
+        
+        db.session.commit()
+        print(f"Successfully added {len(common_categories)} common accessory categories to database.")
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding common accessory categories: {e}")
+
 
 
 def initialize_database():
@@ -460,6 +506,8 @@ def initialize_database():
     create_limited_user()
     # Add common phone types
     add_common_phone_types()
+    # Add common accessory categories
+    add_common_accessory_categories()
     return True
 
 # Initialize database on app startup
