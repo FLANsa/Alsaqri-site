@@ -60,47 +60,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Initialize database on app startup
-def create_admin_user():
-    """Create admin user if it doesn't exist"""
-    try:
-        admin = User.query.filter_by(username='admin').first()
-        if not admin:
-            admin = User(
-                username='admin', 
-                password=generate_password_hash('admin123'), 
-                is_admin=True,
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("Admin user created successfully!")
-        else:
-            print("Admin user already exists!")
-    except Exception as e:
-        print(f"Error creating admin user: {e}")
-        db.session.rollback()
 
-def initialize_database():
-    """Initialize database with proper error handling"""
-    try:
-        # Check if tables exist by trying to query
-        User.query.first()
-        print("Database tables already exist!")
-    except Exception:
-        print("Creating database tables...")
-        try:
-            db.create_all()
-            print("Database tables created successfully!")
-        except Exception as e:
-            print(f"Error creating tables: {e}")
-            return False
-    
-    # Create admin user
-    create_admin_user()
-    return True
-
-with app.app_context():
-    initialize_database()
 
 # Models
 class User(UserMixin, db.Model):
@@ -247,6 +207,49 @@ class SaleItem(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
+# Database initialization functions
+def create_admin_user():
+    """Create admin user if it doesn't exist"""
+    try:
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin = User(
+                username='admin', 
+                password=generate_password_hash('admin123'), 
+                is_admin=True,
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("Admin user created successfully!")
+        else:
+            print("Admin user already exists!")
+    except Exception as e:
+        print(f"Error creating admin user: {e}")
+        db.session.rollback()
+
+def initialize_database():
+    """Initialize database with proper error handling"""
+    try:
+        # Check if tables exist by trying to query
+        User.query.first()
+        print("Database tables already exist!")
+    except Exception:
+        print("Creating database tables...")
+        try:
+            db.create_all()
+            print("Database tables created successfully!")
+        except Exception as e:
+            print(f"Error creating tables: {e}")
+            return False
+    
+    # Create admin user
+    create_admin_user()
+    return True
+
+# Initialize database on app startup
+with app.app_context():
+    initialize_database()
 
 # Create limited user if not exists
 
