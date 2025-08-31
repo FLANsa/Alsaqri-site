@@ -39,8 +39,18 @@ def ar_text(text: str) -> str:
     """Shape & reorder only when the string contains Arabic; force RTL base direction."""
     if contains_arabic(text):
         shaped = arabic_reshaper.reshape(text)
-        return get_display(shaped, base_dir='R')
+        # Use RTL base direction for proper Arabic text ordering
+        result = get_display(shaped, base_dir='rtl')
+        print(f"Arabic text processing: '{text}' -> '{result}'")
+        return result
     return text  # leave numbers/Latin as-is
+
+def ar_text_simple(text: str) -> str:
+    """Simple Arabic text processing without complex bidi algorithm"""
+    if contains_arabic(text):
+        # Just reshape without bidi reordering
+        return arabic_reshaper.reshape(text)
+    return text
 
 FONT_CANDIDATES = [
     "static/fonts/NotoNaskhArabic-Regular.ttf",
@@ -57,10 +67,15 @@ def load_font(size: int) -> ImageFont.FreeTypeFont:
     for p in FONT_CANDIDATES:
         if os.path.exists(p):
             try:
-                return ImageFont.truetype(p, size)
-            except Exception:
-                pass
-    raise RuntimeError("Arabic-capable TTF font not found. Add NotoNaskhArabic-Regular.ttf under static/fonts/")
+                font = ImageFont.truetype(p, size)
+                print(f"Loaded font: {p} at size {size}")
+                return font
+            except Exception as e:
+                print(f"Failed to load font {p}: {e}")
+                continue
+    # Fallback to default font if no TTF fonts are available
+    print("Warning: No Arabic TTF fonts found, using default font")
+    return ImageFont.load_default()
 
 def fit_font(draw: ImageDraw.ImageDraw, text: str, max_width_px: int, start_size: int, min_size: int = 28):
     size = start_size
@@ -754,7 +769,7 @@ def download_barcode_pdf(phone_number):
             draw = ImageDraw.Draw(sticker_img)
 
             # === 1) Company header (very large, RTL-correct) ===
-            company_text = ar_text("الصقري للاتصالات")
+            company_text = ar_text_simple("الصقري للاتصالات")
             margin_px = int(1.0 * PX_PER_MM)
             max_company_w = int(width_px * 0.95)
             company_font = fit_font(draw, company_text, max_company_w, start_size=220, min_size=80)
@@ -785,9 +800,9 @@ def download_barcode_pdf(phone_number):
 
             # === 3) Bottom details (larger) ===
             # Labels (Arabic, RTL)
-            detail_label  = ar_text("رقم الجهاز")
-            battery_label = ar_text("نسبة البطارية")
-            memory_label  = ar_text("الذاكرة")
+            detail_label  = ar_text_simple("رقم الجهاز")
+            battery_label = ar_text_simple("نسبة البطارية")
+            memory_label  = ar_text_simple("الذاكرة")
 
             # Values (numbers stay LTR; wrap with LRM)
             device_val  = LRM + (str(phone.phone_number) if phone.phone_number else "") + LRM
