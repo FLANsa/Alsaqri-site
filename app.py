@@ -760,6 +760,7 @@ def download_barcode_pdf(phone_number):
             W_MM, H_MM = 40, 25
             width_px = int(W_MM * PX_PER_MM)
             height_px = int(H_MM * PX_PER_MM)
+            TEXT_SHRINK = 0.72  # Make all text ~10% smaller
 
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
             draw = ImageDraw.Draw(sticker_img)
@@ -767,7 +768,7 @@ def download_barcode_pdf(phone_number):
             # === 1) Company header (smaller, RTL-correct) ===
             company_text = ar_text_simple("الصقري للاتصالات")
             margin_px = int(1.0 * PX_PER_MM)
-            max_company_w = int(width_px * 0.90)
+            max_company_w = int(width_px * 0.90 * TEXT_SHRINK)
             company_font = fit_font(draw, company_text, max_company_w, start_size=160, min_size=60)
             cb = draw.textbbox((0, 0), company_text, font=company_font)
             cx = width_px // 2
@@ -812,9 +813,10 @@ def download_barcode_pdf(phone_number):
 
             baseline_y = height_px - int(4.2 * PX_PER_MM)
 
-            # Make labels & values bigger
-            label_font = fit_font(draw, detail_label, col_w - 2 * margin_px, start_size=80, min_size=44)
-            value_font = fit_font(draw, device_val,  col_w - 2 * margin_px, start_size=96, min_size=56)
+            # Make labels & values bigger (with TEXT_SHRINK applied)
+            max_col_w = int((col_w - 2 * margin_px) * TEXT_SHRINK)
+            label_font = fit_font(draw, detail_label, max_col_w, start_size=80, min_size=44)
+            value_font = fit_font(draw, device_val,  max_col_w, start_size=96, min_size=56)
 
             # Column 1
             center_text(draw, c1, baseline_y - int(3.6 * PX_PER_MM), detail_label, label_font)
