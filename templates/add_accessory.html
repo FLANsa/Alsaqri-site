@@ -53,6 +53,21 @@
                         </div>
 
                         <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="barcode" class="form-label">الباركود</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="barcode" name="barcode" placeholder="أدخل الباركود أو اتركه فارغاً لإنشائه تلقائياً">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="generateBarcode()">
+                                            <i class="fas fa-barcode"></i> إنشاء باركود
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">إذا لم تدخل باركود، سيتم إنشاء واحد تلقائياً</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="purchase_price" class="form-label">سعر الشراء (مع الضريبة) *</label>
@@ -194,6 +209,15 @@ function refreshAccessoryCategoryData() {
     .catch(error => {
         console.error('Error refreshing accessory category data:', error);
     });
+}
+
+function generateBarcode() {
+    // Generate a unique barcode number for accessories
+    const timestamp = Date.now();
+    const randomNum = Math.floor(Math.random() * 1000);
+    const barcodeNumber = `ACC${timestamp}${randomNum}`;
+    
+    document.getElementById('barcode').value = barcodeNumber;
 }
 </script>
 {% endblock %}

@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime
 import os
+import time
 from sqlalchemy import func
 import random
 import barcode
@@ -241,6 +242,8 @@ class Accessory(db.Model):
     name = db.Column(db.String(200), nullable=False)
     category = db.Column(db.String(100), nullable=False)  # accessory, charger, case, screen_protector
     description = db.Column(db.Text)
+    barcode = db.Column(db.String(50), unique=True)  # باركود الأكسسوار
+    barcode_path = db.Column(db.String(200))  # مسار ملف الباركود
     purchase_price = db.Column(db.Float, nullable=False)  # سعر الشراء (بدون ضريبة)
     selling_price = db.Column(db.Float, nullable=False)   # سعر البيع (بدون ضريبة)
     purchase_price_with_vat = db.Column(db.Float, nullable=False)  # سعر الشراء (مع ضريبة)
@@ -675,6 +678,53 @@ def generate_barcode(phone_number, battery_age=None):
         # Return a default path if barcode generation fails
         return f"static/barcodes/{phone_number}.png"
 
+def generate_accessory_barcode(barcode_number):
+    """Generate barcode for accessory"""
+    try:
+        print(f"Generating barcode for accessory: {barcode_number}")
+        
+        # Create barcode with accessory number
+        barcode_data = str(barcode_number)
+        
+        # Create barcode using python-barcode
+        barcode_class = barcode.get_barcode_class('code128')
+        barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
+        
+        # Set custom options for the barcode (same as phone barcodes)
+        options = {
+            'module_width': 0.2,   # Width of each bar
+            'module_height': 8,    # Height of the barcode
+            'write_text': False,   # Hide the text below barcode
+            'text_distance': 0.3,  # Distance between barcode and text
+            'quiet_zone': 0.3,     # Quiet zone around the barcode
+            'dpi': 300            # Higher DPI for better quality
+        }
+        
+        # Create barcodes directory if it doesn't exist
+        if not os.path.exists('static/barcodes'):
+            os.makedirs('static/barcodes')
+            print("Created barcodes directory")
+        
+        # Save barcode image with custom options
+        filename = f"static/barcodes/ACC_{barcode_number}"
+        barcode_path = barcode_instance.save(filename, options)
+        print(f"Accessory barcode saved to: {barcode_path}")
+        
+        # Convert the saved image to smaller sticker size (4cm x 2cm)
+        img = Image.open(barcode_path)
+        # Convert cm to pixels (1cm = 37.795276 pixels at 96 DPI)
+        width_px = int(4.0 * 37.795276)   # 4cm width
+        height_px = int(2.0 * 37.795276)  # 2cm height
+        img = img.resize((width_px, height_px), Image.LANCZOS)
+        img.save(barcode_path)
+        print(f"Accessory barcode resized and saved successfully")
+        
+        return barcode_path
+    except Exception as e:
+        print(f"Error in generate_accessory_barcode: {str(e)}")
+        # Return a default path if barcode generation fails
+        return f"static/barcodes/ACC_{barcode_number}.png"
+
 @app.route('/barcode/<phone_number>')
 @login_required
 def get_barcode(phone_number):
@@ -699,6 +749,15 @@ def download_barcode_pdf(phone_number):
     phone = Phone.query.filter_by(phone_number=phone_number).first()
     if not phone:
         flash('الهاتف غير موجود', 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/download_accessory_barcode_pdf/<barcode>')
+@login_required
+def download_accessory_barcode_pdf(barcode):
+    """Download accessory barcode as PDF with exact dimensions"""
+    accessory = Accessory.query.filter_by(barcode=barcode).first()
+    if not accessory:
+        flash('الأكسسوار غير موجود', 'error')
         return redirect(url_for('dashboard'))
     
     try:
@@ -815,6 +874,134 @@ def download_barcode_pdf(phone_number):
     except Exception as e:
         flash(f'خطأ في إنشاء PDF: {str(e)}', 'error')
         return redirect(url_for('print_barcode', phone_number=phone_number))
+
+    try:
+        # Create complete sticker image first
+        def create_complete_sticker_image():
+            # 600 DPI canvas
+            DPI = 600
+            MM_PER_IN = 25.4
+            PX_PER_MM = DPI / MM_PER_IN
+            W_MM, H_MM = 40, 25
+            width_px = int(W_MM * PX_PER_MM)
+            height_px = int(H_MM * PX_PER_MM)
+            TEXT_SHRINK = 0.72  # Make all text ~10% smaller
+
+            sticker_img = Image.new('RGB', (width_px, height_px), color='white')
+            draw = ImageDraw.Draw(sticker_img)
+
+            # === 1) Company header (smaller, RTL-correct) ===
+            company_text = ar_text_simple("الصقري للاتصالات")
+            margin_px = int(1.0 * PX_PER_MM)
+            max_company_w = int(width_px * 0.90 * TEXT_SHRINK)
+            company_font = fit_font(draw, company_text, max_company_w, start_size=160, min_size=60)
+            cb = draw.textbbox((0, 0), company_text, font=company_font)
+            cx = width_px // 2
+            cy = int(1.4 * PX_PER_MM)
+            # draw bold by using stroke
+            center_text(draw, cx, cy, company_text, company_font, stroke_width=2)
+
+            # === 2) Barcode image ===
+            target_bar_w = int(width_px * 0.90)
+            target_bar_h = int(14 * PX_PER_MM)
+            
+            # Try to load existing barcode image
+            barcode_img = None
+            if accessory.barcode_path and os.path.exists(accessory.barcode_path):
+                try:
+                    barcode_img = Image.open(accessory.barcode_path)
+                    barcode_img = barcode_img.resize((target_bar_w, target_bar_h), Image.LANCZOS)
+                except Exception as e:
+                    print(f"Error loading barcode image: {e}")
+                    barcode_img = None
+            
+            # Create placeholder barcode if image not found
+            if barcode_img is None:
+                barcode_img = Image.new('RGB', (target_bar_w, target_bar_h), color='white')
+                placeholder_draw = ImageDraw.Draw(barcode_img)
+                placeholder_font = load_font(24)
+                placeholder_text = f"BARCODE: {accessory.barcode}"
+                placeholder_bbox = placeholder_draw.textbbox((0, 0), placeholder_text, font=placeholder_font)
+                placeholder_w = placeholder_bbox[2] - placeholder_bbox[0]
+                placeholder_h = placeholder_bbox[3] - placeholder_bbox[1]
+                placeholder_x = (target_bar_w - placeholder_w) // 2
+                placeholder_y = (target_bar_h - placeholder_h) // 2
+                placeholder_draw.text((placeholder_x, placeholder_y), placeholder_text, fill='black', font=placeholder_font)
+            
+            # Position barcode
+            bar_x = (width_px - target_bar_w) // 2
+            bar_y = cb[3] + int(1.0 * PX_PER_MM)
+            sticker_img.paste(barcode_img, (bar_x, bar_y))
+
+            # === 3) Detail text (labels above values) ===
+            col_w = width_px // 3
+            baseline_y = height_px - int(4.2 * PX_PER_MM)
+            margin_px = int(0.5 * PX_PER_MM)
+            max_col_w = int((col_w - 2 * margin_px) * TEXT_SHRINK)
+
+            # Labels
+            device_label = ar_text_simple("اسم المنتج")
+            battery_label = ar_text_simple("الفئة")
+            memory_label = ar_text_simple("السعر")
+
+            label_font = fit_font(draw, device_label, max_col_w, start_size=80, min_size=44)
+            
+            # Values (with LRM for numbers)
+            device_val = f"{LRM}{accessory.name}"
+            battery_val = f"{LRM}{accessory.category}"
+            memory_val = f"{LRM}{accessory.selling_price_with_vat:.2f}"
+
+            value_font = fit_font(draw, device_val, max_col_w, start_size=96, min_size=56)
+
+            # Position columns
+            c1 = col_w // 2
+            c2 = col_w + col_w // 2
+            c3 = 2 * col_w + col_w // 2
+
+            # Draw labels above values
+            center_text(draw, c1, baseline_y - int(2.8 * PX_PER_MM), device_label, label_font)
+            center_text(draw, c2, baseline_y - int(2.8 * PX_PER_MM), battery_label, label_font)
+            center_text(draw, c3, baseline_y - int(2.8 * PX_PER_MM), memory_label, label_font)
+
+            # Draw values
+            center_text(draw, c1, baseline_y - int(0.8 * PX_PER_MM), device_val, value_font)
+            center_text(draw, c2, baseline_y - int(0.8 * PX_PER_MM), battery_val, value_font)
+            center_text(draw, c3, baseline_y - int(0.8 * PX_PER_MM), memory_val, value_font)
+
+            return sticker_img
+
+        # Create the complete sticker image
+        sticker_img = create_complete_sticker_image()
+        
+        # Save to temporary file
+        sticker_temp_path = f"temp_sticker_{accessory.barcode}.png"
+        sticker_img.save(sticker_temp_path, 'PNG', optimize=False, quality=100)
+        
+        # Create PDF with the sticker image - 40.0mm x 25.0mm
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=(40*mm, 25*mm))
+        
+        # Add the complete sticker image to PDF
+        p.drawImage(sticker_temp_path, 0, 0, width=40*mm, height=25*mm)
+        
+        p.showPage()
+        p.save()
+        
+        # Clean up temp file
+        if os.path.exists(sticker_temp_path):
+            os.remove(sticker_temp_path)
+        
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'accessory_barcode_{accessory.barcode}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        flash(f'خطأ في إنشاء PDF: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
 
 def generate_unique_phone_number():
     # Get the highest existing phone number
@@ -1104,6 +1291,7 @@ def create_sale_page():
             'brand': phone.brand,
             'model': phone.model,
             'serial_number': phone.serial_number,
+            'phone_number': phone.phone_number,
             'selling_price': phone.selling_price_with_vat,  # Use price with VAT
             'description': phone.description or ''
         })
@@ -1116,6 +1304,7 @@ def create_sale_page():
             'name': accessory.name,
             'category': accessory.category,
             'description': accessory.description or '',
+            'barcode': accessory.barcode or '',
             'selling_price': accessory.selling_price_with_vat,  # Use price with VAT
             'quantity_in_stock': accessory.quantity_in_stock
         })
@@ -1241,11 +1430,27 @@ def add_accessory():
             name = request.form.get('name')
             category = request.form.get('category')
             description = request.form.get('description')
+            barcode = request.form.get('barcode', '').strip()
             purchase_price_with_vat = float(request.form.get('purchase_price'))  # Input already includes VAT
             selling_price_with_vat = float(request.form.get('selling_price'))    # Input already includes VAT
             quantity = int(request.form.get('quantity', 0))
             supplier = request.form.get('supplier')
             notes = request.form.get('notes')
+            
+            # Generate barcode if not provided
+            if not barcode:
+                timestamp = int(time.time())
+                random_num = random.randint(100, 999)
+                barcode = f"ACC{timestamp}{random_num}"
+            
+            # Check if barcode already exists
+            existing_accessory = Accessory.query.filter_by(barcode=barcode).first()
+            if existing_accessory:
+                flash('الباركود موجود مسبقاً، يرجى استخدام باركود آخر', 'error')
+                return redirect(url_for('add_accessory'))
+            
+            # Generate barcode image
+            barcode_path = generate_accessory_barcode(barcode)
             
             # Calculate base prices without VAT
             purchase_price = calculate_price_without_vat(purchase_price_with_vat)
@@ -1259,6 +1464,8 @@ def add_accessory():
                 name=name,
                 category=category,
                 description=description,
+                barcode=barcode,
+                barcode_path=barcode_path,
                 purchase_price=purchase_price,
                 selling_price=selling_price,
                 purchase_price_with_vat=purchase_price_with_vat,

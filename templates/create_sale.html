@@ -61,6 +61,19 @@
                     <h5 class="mb-0"><i class="fas fa-box"></i> إضافة المنتجات</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Barcode Search -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="barcode_search" class="form-label">البحث بالباركود</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="barcode_search" placeholder="أدخل الباركود للبحث عن المنتج">
+                                <button class="btn btn-outline-primary" type="button" onclick="searchByBarcode()">
+                                    <i class="fas fa-search"></i> بحث
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Product Type Selection -->
                     <div class="row mb-3">
                         <div class="col-md-4">
@@ -156,6 +169,61 @@
 let cart = [];
 let products = {{ phones|tojson }};
 let accessories = {{ accessories|tojson }};
+
+function searchByBarcode() {
+    const barcode = document.getElementById('barcode_search').value.trim();
+    if (!barcode) {
+        alert('يرجى إدخال الباركود');
+        return;
+    }
+    
+    // Search in phones
+    const phone = products.find(p => p.phone_number === barcode);
+    if (phone) {
+        // Set product type to phone
+        document.getElementById('product_type').value = 'phone';
+        loadProducts();
+        
+        // Find and select the phone in dropdown
+        const productSelect = document.getElementById('product_select');
+        for (let i = 0; i < productSelect.options.length; i++) {
+            if (productSelect.options[i].value == phone.id) {
+                productSelect.selectedIndex = i;
+                updateProductInfo();
+                break;
+            }
+        }
+        return;
+    }
+    
+    // Search in accessories
+    const accessory = accessories.find(a => a.barcode === barcode);
+    if (accessory) {
+        // Determine product type based on category
+        let productType = 'accessory';
+        if (accessory.category === 'charger') productType = 'charger';
+        else if (accessory.category === 'case') productType = 'case';
+        else if (accessory.category === 'screen_protector') productType = 'screen_protector';
+        
+        // Set product type
+        document.getElementById('product_type').value = productType;
+        loadProducts();
+        
+        // Find and select the accessory in dropdown
+        const productSelect = document.getElementById('product_select');
+        for (let i = 0; i < productSelect.options.length; i++) {
+            if (productSelect.options[i].value == accessory.id) {
+                productSelect.selectedIndex = i;
+                updateProductInfo();
+                break;
+            }
+        }
+        return;
+    }
+    
+    // If not found
+    alert('لم يتم العثور على منتج بهذا الباركود');
+}
 
 function loadProducts() {
     const productType = document.getElementById('product_type').value;
