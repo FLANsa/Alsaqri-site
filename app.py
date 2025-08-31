@@ -621,7 +621,7 @@ def generate_barcode(phone_number, battery_age=None):
     options = {
         'module_width': 0.15,  # Width of each bar (reduced from 0.2)
         'module_height': 6,    # Height of the barcode (reduced from 8)
-        'font_size': 5,        # Font size for the number (reduced from 6)
+        'font_size': 4,        # Font size for the number (reduced from 5)
         'text_distance': 0.3,  # Distance between barcode and text (reduced from 0.5)
         'quiet_zone': 0.3,     # Quiet zone around the barcode (reduced from 0.5)
         'dpi': 203            # DPI optimized for thermal printers
@@ -696,7 +696,7 @@ def download_barcode_pdf(phone_number):
                 arabic_font = None
                 for font_path in font_paths:
                     if os.path.exists(font_path):
-                        arabic_font = ImageFont.truetype(font_path, 32)
+                        arabic_font = ImageFont.truetype(font_path, 24)
                         break
                 
                 if arabic_font is None:
@@ -709,10 +709,10 @@ def download_barcode_pdf(phone_number):
             company_text = "الصقري للإتصالات"
             # Use smaller font for company name to fit smaller sticker
             try:
-                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 80)
+                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 60)
             except:
                 try:
-                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 80)
+                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 60)
                 except:
                     company_font = arabic_font
             
@@ -745,7 +745,7 @@ def download_barcode_pdf(phone_number):
             start_y = height_px - 70
             
             # Use smaller font for details
-            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 4) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
+            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 3) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
             
             # Device number - Column 1
             device_label = "رقم الجهاز"
