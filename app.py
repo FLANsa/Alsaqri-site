@@ -736,8 +736,8 @@ def download_barcode_pdf(phone_number):
                     barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.LANCZOS)
                     
                     # Paste barcode with fine-tuned positioning - below company name
-                    barcode_x = (width_px - barcode_width) // 2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
-                    barcode_y = 25  # Position below company name
+                    barcode_x = (width_px - barcode_width) // 2  # Perfectly center the barcode
+                    barcode_y = (height_px - barcode_height) // 2  # Perfectly center vertically
                     sticker_img.paste(barcode_img, (barcode_x, barcode_y))
                     print(f"Barcode pasted successfully at ({barcode_x}, {barcode_y}) with size ({barcode_width}, {barcode_height})")
                 except Exception as e:
@@ -747,8 +747,8 @@ def download_barcode_pdf(phone_number):
                 # Create a simple barcode placeholder
                 barcode_width = int(width_px * 0.80)
                 barcode_height = int(10 * 11.811)
-                barcode_x = (width_px - barcode_width) // 2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
-                barcode_y = 25
+                barcode_x = (width_px - barcode_width) // 2  # Perfectly center the barcode
+                barcode_y = (height_px - barcode_height) // 2  # Perfectly center vertically
                 # Draw a simple barcode pattern
                 for i in range(0, barcode_width, 4):
                     draw.rectangle([barcode_x + i, barcode_y, barcode_x + i + 2, barcode_y + barcode_height], fill='black')
