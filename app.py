@@ -244,6 +244,7 @@ class Accessory(db.Model):
     description = db.Column(db.Text)
     barcode = db.Column(db.String(50), unique=True)  # باركود الأكسسوار
     barcode_path = db.Column(db.String(200))  # مسار ملف الباركود
+    pdf_path = db.Column(db.String(200))  # مسار ملف PDF الباركود
     purchase_price = db.Column(db.Float, nullable=False)  # سعر الشراء (بدون ضريبة)
     selling_price = db.Column(db.Float, nullable=False)   # سعر البيع (بدون ضريبة)
     purchase_price_with_vat = db.Column(db.Float, nullable=False)  # سعر الشراء (مع ضريبة)
@@ -1127,6 +1128,26 @@ def download_accessory_barcode_pdf(barcode):
         flash(f'خطأ في إنشاء PDF: {str(e)}', 'error')
         return redirect(url_for('dashboard'))
 
+@app.route('/download_saved_accessory_pdf/<barcode>')
+@login_required
+def download_saved_accessory_pdf(barcode):
+    """Download saved accessory PDF barcode"""
+    accessory = Accessory.query.filter_by(barcode=barcode).first()
+    if not accessory:
+        flash('الأكسسوار غير موجود', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if not accessory.pdf_path or not os.path.exists(accessory.pdf_path):
+        flash('ملف PDF الباركود غير موجود', 'error')
+        return redirect(url_for('print_accessory_barcode', barcode=barcode))
+    
+    return send_file(
+        accessory.pdf_path,
+        as_attachment=True,
+        download_name=f'accessory_barcode_{barcode}.pdf',
+        mimetype='application/pdf'
+    )
+
 def generate_unique_phone_number():
     # Get the highest existing phone number
     highest_phone = db.session.query(func.max(Phone.phone_number)).scalar()
@@ -1601,6 +1622,138 @@ def add_accessory():
             
             db.session.add(accessory)
             db.session.commit()
+            
+            # Generate and save PDF barcode automatically
+            try:
+                # Create complete sticker image first
+                def create_complete_sticker_image():
+                    # 600 DPI canvas
+                    DPI = 600
+                    MM_PER_IN = 25.4
+                    PX_PER_MM = DPI / MM_PER_IN
+                    W_MM, H_MM = 40, 25
+                    width_px = int(W_MM * PX_PER_MM)
+                    height_px = int(H_MM * PX_PER_MM)
+                    TEXT_SHRINK = 0.72  # Make all text ~10% smaller
+
+                    sticker_img = Image.new('RGB', (width_px, height_px), color='white')
+                    draw = ImageDraw.Draw(sticker_img)
+                    
+                    # === 1) Company header (smaller, RTL-correct) ===
+                    company_text = ar_text_simple("الصقري للاتصالات")
+                    margin_px = int(1.0 * PX_PER_MM)
+                    max_company_w = int(width_px * 0.90 * TEXT_SHRINK)
+                    company_font = fit_font(draw, company_text, max_company_w, start_size=160, min_size=60)
+                    cb = draw.textbbox((0, 0), company_text, font=company_font)
+                    cx = width_px // 2
+                    cy = int(1.4 * PX_PER_MM)
+                    # draw bold by using stroke
+                    center_text(draw, cx, cy, company_text, company_font, stroke_width=2)
+
+                    # === 2) Barcode image ===
+                    target_bar_w = int(width_px * 0.90)
+                    target_bar_h = int(14 * PX_PER_MM)
+                    
+                    # Try to load existing barcode image
+                    barcode_img = None
+                    if accessory.barcode_path and os.path.exists(accessory.barcode_path):
+                        try:
+                            barcode_img = Image.open(accessory.barcode_path)
+                            barcode_img = barcode_img.resize((target_bar_w, target_bar_h), Image.LANCZOS)
+                        except Exception as e:
+                            print(f"Error loading barcode image: {e}")
+                            barcode_img = None
+                    
+                    # Create placeholder barcode if image not found
+                    if barcode_img is None:
+                        barcode_img = Image.new('RGB', (target_bar_w, target_bar_h), color='white')
+                        placeholder_draw = ImageDraw.Draw(barcode_img)
+                        placeholder_font = load_font(24)
+                        placeholder_text = f"BARCODE: {accessory.barcode}"
+                        placeholder_bbox = placeholder_draw.textbbox((0, 0), placeholder_text, font=placeholder_font)
+                        placeholder_w = placeholder_bbox[2] - placeholder_bbox[0]
+                        placeholder_h = placeholder_bbox[3] - placeholder_bbox[1]
+                        placeholder_x = (target_bar_w - placeholder_w) // 2
+                        placeholder_y = (target_bar_h - placeholder_h) // 2
+                        placeholder_draw.text((placeholder_x, placeholder_y), placeholder_text, fill='black', font=placeholder_font)
+                    
+                    # Position barcode
+                    bar_x = (width_px - target_bar_w) // 2
+                    bar_y = cb[3] + int(1.0 * PX_PER_MM)
+                    sticker_img.paste(barcode_img, (bar_x, bar_y))
+
+                    # === 3) Bottom details (larger) ===
+                    # Labels (Arabic, RTL)
+                    name_label = ar_text_simple("الاسم")
+                    category_label = ar_text_simple("الفئة")
+                    price_label = ar_text_simple("السعر")
+
+                    # Values (numbers stay LTR; wrap with LRM)
+                    name_val = LRM + (accessory.name if accessory.name else "") + LRM
+                    category_val = LRM + (accessory.category if accessory.category else "") + LRM
+                    price_val = LRM + (f"{accessory.selling_price_with_vat:.0f}" if accessory.selling_price_with_vat else "0") + LRM
+
+                    col_w = width_px // 3
+                    c1 = col_w // 2
+                    c2 = col_w + col_w // 2
+                    c3 = 2 * col_w + col_w // 2
+
+                    baseline_y = height_px - int(4.2 * PX_PER_MM)
+
+                    # Make labels & values bigger (with TEXT_SHRINK applied)
+                    max_col_w = int((col_w - 2 * margin_px) * TEXT_SHRINK)
+                    label_font = fit_font(draw, name_label, max_col_w, start_size=80, min_size=44)
+                    value_font = fit_font(draw, name_val,  max_col_w, start_size=96, min_size=56)
+
+                    # Column 1
+                    center_text(draw, c1, baseline_y - int(2.8 * PX_PER_MM), name_label, label_font)
+                    center_text(draw, c1, baseline_y - int(0.8 * PX_PER_MM), name_val,  value_font)
+
+                    # Column 2
+                    center_text(draw, c2, baseline_y - int(2.8 * PX_PER_MM), category_label, label_font)
+                    center_text(draw, c2, baseline_y - int(0.8 * PX_PER_MM), category_val,  value_font)
+
+                    # Column 3
+                    center_text(draw, c3, baseline_y - int(2.8 * PX_PER_MM), price_label, label_font)
+                    center_text(draw, c3, baseline_y - int(0.8 * PX_PER_MM), price_val,  value_font)
+
+                    return sticker_img
+                
+                # Create the complete sticker image
+                sticker_img = create_complete_sticker_image()
+                
+                # Save sticker image temporarily with high quality
+                sticker_temp_path = f"static/barcodes/sticker_ACC_{barcode}.png"
+                sticker_img.save(sticker_temp_path, 'PNG', optimize=False, quality=100)
+                
+                # Create PDF with the sticker image - 40.0mm x 25.0mm
+                buffer = BytesIO()
+                p = canvas.Canvas(buffer, pagesize=(40*mm, 25*mm))
+                
+                # Add the complete sticker image to PDF
+                p.drawImage(sticker_temp_path, 0, 0, width=40*mm, height=25*mm)
+                
+                p.showPage()
+                p.save()
+                
+                # Save PDF to file
+                pdf_path = f"static/barcodes/accessory_barcode_{barcode}.pdf"
+                with open(pdf_path, 'wb') as f:
+                    f.write(buffer.getvalue())
+                
+                # Update accessory with PDF path
+                accessory.pdf_path = pdf_path
+                db.session.commit()
+                
+                # Clean up temp file
+                if os.path.exists(sticker_temp_path):
+                    os.remove(sticker_temp_path)
+                
+                print(f"PDF barcode saved: {pdf_path}")
+                
+            except Exception as e:
+                print(f"Error generating PDF barcode: {str(e)}")
+                # Continue even if PDF generation fails
             
             flash('تمت إضافة الأكسسوار بنجاح', 'success')
             return redirect(url_for('list_accessories'))
