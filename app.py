@@ -683,132 +683,119 @@ def download_barcode_pdf(phone_number):
         # Create complete sticker image first
         def create_complete_sticker_image():
             from PIL import Image, ImageDraw, ImageFont
+            import arabic_reshaper
+            from bidi.algorithm import get_display
             
-            # Create image with higher resolution (40mm x 25mm at 600 DPI for better quality)
-            width_px = int(40 * 23.622)  # 40mm at 600 DPI (doubled resolution)
-            height_px = int(25 * 23.622)  # 25mm at 600 DPI (doubled resolution)
+            # Define constants for 600 DPI
+            DPI = 600
+            MM_PER_IN = 25.4
+            PX_PER_MM = DPI / MM_PER_IN
+            W_MM, H_MM = 40, 25
+            width_px = int(W_MM * PX_PER_MM)
+            height_px = int(H_MM * PX_PER_MM)
             
-            # Create white background with high quality
+            # Create white background
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
             draw = ImageDraw.Draw(sticker_img)
             
-            # Try to load Arabic font
-            try:
-                font_paths = [
-                    '/System/Library/Fonts/Arial.ttf',
-                    '/System/Library/Fonts/Helvetica.ttc',
-                    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-                    'C:/Windows/Fonts/arial.ttf',
-                ]
-                
-                arabic_font = None
-                for font_path in font_paths:
-                    if os.path.exists(font_path):
-                        arabic_font = ImageFont.truetype(font_path, 24)
-                        break
-                
-                if arabic_font is None:
-                    arabic_font = ImageFont.load_default()
-                    
-            except:
-                arabic_font = ImageFont.load_default()
+            # Font candidates for Arabic support
+            FONT_CANDIDATES = [
+                "C:/Windows/Fonts/arial.ttf",
+                "/System/Library/Fonts/Arial.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            ]
             
-            # Company name at top - مطابق للصفحة
-            company_text = "الصقري للإتصالات"
-            # Use larger font for company name with higher resolution
-            try:
-                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 64)  # Increased font size for bigger text
-            except:
-                try:
-                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 64)  # Increased font size for bigger text
-                except:
-                    company_font = arabic_font
+            def load_font(size):
+                for p in FONT_CANDIDATES:
+                    if os.path.exists(p):
+                        return ImageFont.truetype(p, size)
+                return ImageFont.load_default()
             
-            bbox = draw.textbbox((0, 0), company_text, font=company_font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
-            x = (width_px - text_width) // 2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            y = 8  # Adjusted for larger font size
-            draw.text((x, y), company_text, fill='black', font=company_font)
+            def shape_ar(text):
+                # Proper shaping for Arabic
+                return get_display(arabic_reshaper.reshape(text))
             
-            # Barcode in center - مطابق للصفحة
+            def fit_font(draw, text, max_width_px, start_size, min_size=24):
+                size = start_size
+                while size >= min_size:
+                    f = load_font(size)
+                    bbox = draw.textbbox((0,0), text, font=f)
+                    if (bbox[2]-bbox[0]) <= max_width_px:
+                        return f
+                    size -= 2
+                return load_font(min_size)
+            
+            def center_text(x_center, y, text, font):
+                b = draw.textbbox((0,0), text, font=font)
+                draw.text((x_center - (b[2]-b[0])//2, y), text, fill="black", font=font)
+            
+            # Company name - much larger and auto-fit to ~90% of label width
+            company_text = shape_ar("الصقري للاتصالات")
+            margin_px = int(2.0 * PX_PER_MM)  # 2mm margin
+            max_company_w = width_px - 2*margin_px
+            # Start big; will shrink to fit
+            company_font = fit_font(draw, company_text, max_company_w, start_size=160)
+            cb = draw.textbbox((0,0), company_text, font=company_font)
+            cx = (width_px - (cb[2]-cb[0])) // 2
+            cy = int(2.0 * PX_PER_MM)  # ~2mm from top
+            draw.text((cx, cy), company_text, fill="black", font=company_font)
+            
+            # Barcode - larger size for better readability
             if phone.barcode_path and os.path.exists(phone.barcode_path):
                 try:
                     barcode_img = Image.open(phone.barcode_path)
-                    # Resize barcode to 80% width for 40mm x 25mm sticker - make it more visible with higher resolution
-                    barcode_width = int(width_px * 0.80)  # 80% of sticker width for better visibility
-                    barcode_height = int(10 * 23.622)  # 10mm height for better visibility (adjusted for 600 DPI)
-                    barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.LANCZOS)
+                    # Target ~12 mm tall and ~85% of label width
+                    target_bar_w = int(width_px * 0.85)
+                    target_bar_h = int(12 * PX_PER_MM)  # 12mm tall
+                    barcode_img = barcode_img.resize((target_bar_w, target_bar_h), Image.LANCZOS)
                     
-                    # Paste barcode with fine-tuned positioning - below company name
-                    barcode_x = (width_px - barcode_width) // 2  # Perfectly center the barcode
-                    barcode_y = (height_px - barcode_height) // 2  # Perfectly center vertically
-                    sticker_img.paste(barcode_img, (barcode_x, barcode_y))
-                    print(f"Barcode pasted successfully at ({barcode_x}, {barcode_y}) with size ({barcode_width}, {barcode_height})")
+                    bar_x = (width_px - target_bar_w)//2
+                    # place roughly centered vertically under the company name
+                    bar_y = int(height_px*0.45) - target_bar_h//2
+                    sticker_img.paste(barcode_img, (bar_x, bar_y))
+                    print(f"Barcode pasted successfully at ({bar_x}, {bar_y}) with size ({target_bar_w}, {target_bar_h})")
                 except Exception as e:
                     print(f"Error pasting barcode: {str(e)}")
             else:
                 print(f"Barcode path not found: {phone.barcode_path}")
                 # Create a simple barcode placeholder
-                barcode_width = int(width_px * 0.80)  # 80% of sticker width
-                barcode_height = int(10 * 23.622)  # Adjusted for 600 DPI
-                barcode_x = (width_px - barcode_width) // 2  # Perfectly center the barcode
-                barcode_y = (height_px - barcode_height) // 2  # Perfectly center vertically
+                target_bar_w = int(width_px * 0.85)
+                target_bar_h = int(12 * PX_PER_MM)
+                bar_x = (width_px - target_bar_w)//2
+                bar_y = int(height_px*0.45) - target_bar_h//2
                 # Draw a simple barcode pattern
-                for i in range(0, barcode_width, 8):  # Doubled spacing for higher resolution
-                    draw.rectangle([barcode_x + i, barcode_y, barcode_x + i + 4, barcode_y + barcode_height], fill='black')
-                print(f"Created placeholder barcode at ({barcode_x}, {barcode_y})")
+                for i in range(0, target_bar_w, 8):
+                    draw.rectangle([bar_x + i, bar_y, bar_x + i + 4, bar_y + target_bar_h], fill='black')
+                print(f"Created placeholder barcode at ({bar_x}, {bar_y})")
             
-            # Device details at bottom - مطابق للصفحة
-            # Use the same Arabic font for all text
-            detail_font = arabic_font
+            # Bottom details - larger and balanced across 3 columns
+            detail_label = shape_ar("رقم الجهاز")
+            battery_label = shape_ar("نسبة البطارية")
+            memory_label = shape_ar("الذاكرة")
+            device_val = shape_ar(str(phone.phone_number))
+            battery_val = shape_ar(str(phone.age) if phone.condition=="used" and phone.age else "100")
+            memory_val = shape_ar(phone.phone_memory if phone.phone_memory else "512")
             
-            # Calculate positions for 3 columns like in page - تحسين الترتيب
-            col_width = width_px // 3
-            start_y = height_px - 90  # Adjusted for larger font size
+            col_w = width_px // 3
+            baseline_y = height_px - int(5.5 * PX_PER_MM)  # ~5.5mm from bottom
             
-            # Use larger font for details with higher resolution
-            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 24) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font  # Increased font size for bigger text
+            label_font = fit_font(draw, detail_label, col_w-2*margin_px, start_size=52)   # bigger labels
+            value_font = fit_font(draw, device_val, col_w-2*margin_px, start_size=60)   # even bigger values
             
-            # Device number - Column 1
-            device_label = "رقم الجهاز"
-            device_value = phone.phone_number
-            # Center text in column with labels above values
-            bbox1 = draw.textbbox((0, 0), device_label, font=detail_font_small)
-            label_width1 = bbox1[2] - bbox1[0]
-            x1 = col_width//2 - label_width1//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x1, start_y - 20), device_label, fill='black', font=detail_font_small)  # Label positioned above
+            # column centers
+            c1 = col_w//2 + 0
+            c2 = col_w + col_w//2
+            c3 = 2*col_w + col_w//2
             
-            bbox1_val = draw.textbbox((0, 0), device_value, font=detail_font_small)
-            value_width1 = bbox1_val[2] - bbox1_val[0]
-            x1_val = col_width//2 - value_width1//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x1_val, start_y + 8), device_value, fill='black', font=detail_font_small)  # Value positioned below label
+            # labels above, values below
+            center_text(c1, baseline_y - int(3.2*PX_PER_MM), detail_label, label_font)
+            center_text(c1, baseline_y - int(1.0*PX_PER_MM), device_val, value_font)
             
-            # Battery percentage - Column 2
-            battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
-            battery_label = "نسبة البطارية"
-            bbox2 = draw.textbbox((0, 0), battery_label, font=detail_font_small)
-            label_width2 = bbox2[2] - bbox2[0]
-            x2 = col_width + col_width//2 - label_width2//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x2, start_y - 20), battery_label, fill='black', font=detail_font_small)  # Label positioned above
+            center_text(c2, baseline_y - int(3.2*PX_PER_MM), battery_label, label_font)
+            center_text(c2, baseline_y - int(1.0*PX_PER_MM), battery_val, value_font)
             
-            bbox2_val = draw.textbbox((0, 0), battery_value, font=detail_font_small)
-            value_width2 = bbox2_val[2] - bbox2_val[0]
-            x2_val = col_width + col_width//2 - value_width2//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x2_val, start_y + 8), battery_value, fill='black', font=detail_font_small)  # Value positioned below label
-            
-            # Memory - Column 3
-            memory_value = phone.phone_memory if phone.phone_memory else "512"
-            memory_label = "الذاكرة"
-            bbox3 = draw.textbbox((0, 0), memory_label, font=detail_font_small)
-            label_width3 = bbox3[2] - bbox3[0]
-            x3 = 2*col_width + col_width//2 - label_width3//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x3, start_y - 20), memory_label, fill='black', font=detail_font_small)  # Label positioned above
-            
-            bbox3_val = draw.textbbox((0, 0), memory_value, font=detail_font_small)
-            value_width3 = bbox3_val[2] - bbox3_val[0]
-            x3_val = 2*col_width + col_width//2 - value_width3//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
-            draw.text((x3_val, start_y + 8), memory_value, fill='black', font=detail_font_small)  # Value positioned below label
+            center_text(c3, baseline_y - int(3.2*PX_PER_MM), memory_label, label_font)
+            center_text(c3, baseline_y - int(1.0*PX_PER_MM), memory_val, value_font)
             
             return sticker_img
         
