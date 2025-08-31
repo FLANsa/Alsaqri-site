@@ -1550,6 +1550,8 @@ def create_sale():
         for item_data in data['items']:
             # Get purchase price from the product
             purchase_price = 0.0
+            sale_item = None
+            
             if item_data['type'] == 'phone':
                 phone = Phone.query.get(item_data['id'])
                 if phone:
@@ -1586,7 +1588,9 @@ def create_sale():
                     if accessory.quantity_in_stock < 0:
                         accessory.quantity_in_stock = 0
             
-            db.session.add(sale_item)
+            # Only add sale_item if it was successfully created
+            if sale_item:
+                db.session.add(sale_item)
         
         db.session.commit()
         
