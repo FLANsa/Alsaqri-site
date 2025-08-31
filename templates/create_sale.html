@@ -170,6 +170,25 @@ let cart = [];
 let products = {{ phones|tojson }};
 let accessories = {{ accessories|tojson }};
 
+function showSuccessMessage(message) {
+    // Create a temporary success alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle"></i> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 3000);
+}
+
 function searchByBarcode() {
     const barcode = document.getElementById('barcode_search').value.trim();
     if (!barcode) {
@@ -195,6 +214,8 @@ function searchByBarcode() {
             if (productSelect.options[i].value == phone.id) {
                 productSelect.selectedIndex = i;
                 updateProductInfo();
+                // Automatically add to cart
+                setTimeout(() => addToCart(), 100);
                 break;
             }
         }
@@ -221,6 +242,8 @@ function searchByBarcode() {
             if (productSelect.options[i].value == accessory.id) {
                 productSelect.selectedIndex = i;
                 updateProductInfo();
+                // Automatically add to cart
+                setTimeout(() => addToCart(), 100);
                 break;
             }
         }
@@ -247,6 +270,8 @@ function searchByBarcode() {
             if (productSelect.options[i].value == partialAccessory.id) {
                 productSelect.selectedIndex = i;
                 updateProductInfo();
+                // Automatically add to cart
+                setTimeout(() => addToCart(), 100);
                 break;
             }
         }
@@ -383,12 +408,19 @@ function addToCart() {
     cart.push(product);
     updateCartDisplay();
     
+    // Show success message
+    const successMessage = `تم إضافة ${product.name} إلى السلة بنجاح!`;
+    showSuccessMessage(successMessage);
+    
     // Reset form
     document.getElementById('product_type').value = '';
     document.getElementById('product_select').innerHTML = '<option value="">اختر المنتج</option>';
     document.getElementById('quantity').value = '1';
     document.getElementById('custom_price').value = '';
     document.getElementById('product_details').style.display = 'none';
+    
+    // Clear barcode search field
+    document.getElementById('barcode_search').value = '';
 }
 
 function updateCartDisplay() {
