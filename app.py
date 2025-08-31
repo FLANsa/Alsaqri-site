@@ -622,7 +622,7 @@ def generate_barcode(phone_number, battery_age=None):
         options = {
             'module_width': 0.15,  # Width of each bar (reduced from 0.2)
             'module_height': 6,    # Height of the barcode (reduced from 8)
-            'font_size': 0,        # Hide the text below barcode
+            'write_text': False,   # Hide the text below barcode (use this instead of font_size)
             'text_distance': 0.3,  # Distance between barcode and text (reduced from 0.5)
             'quiet_zone': 0.3,     # Quiet zone around the barcode (reduced from 0.5)
             'dpi': 203            # DPI optimized for thermal printers
