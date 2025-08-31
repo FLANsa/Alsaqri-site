@@ -735,8 +735,8 @@ def download_barcode_pdf(phone_number):
             if phone.barcode_path and os.path.exists(phone.barcode_path):
                 try:
                     barcode_img = Image.open(phone.barcode_path)
-                    # Resize barcode to 80% width for 40mm x 25mm sticker - make it more visible with higher resolution
-                    barcode_width = int(width_px * 0.80)  # 80% of sticker width for better visibility
+                    # Resize barcode to 100% width for 40mm x 25mm sticker - make it more visible with higher resolution
+                    barcode_width = int(width_px * 1.0)  # 100% of sticker width for maximum visibility
                     barcode_height = int(10 * 23.622)  # 10mm height for better visibility (adjusted for 600 DPI)
                     barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.LANCZOS)
                     
@@ -750,7 +750,7 @@ def download_barcode_pdf(phone_number):
             else:
                 print(f"Barcode path not found: {phone.barcode_path}")
                 # Create a simple barcode placeholder
-                barcode_width = int(width_px * 0.80)
+                barcode_width = int(width_px * 1.0)  # 100% of sticker width
                 barcode_height = int(10 * 23.622)  # Adjusted for 600 DPI
                 barcode_x = (width_px - barcode_width) // 2  # Perfectly center the barcode
                 barcode_y = (height_px - barcode_height) // 2  # Perfectly center vertically
