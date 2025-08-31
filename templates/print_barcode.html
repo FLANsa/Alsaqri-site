@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}طباعة الباركود{% endblock %}
+
+{% block content %}
+<div class="container mt-4" dir="rtl">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-header text-center"><h4 class="m-0">طباعة باركود الهاتف</h4></div>
+        <div class="card-body text-center">
+          
+          <!-- معاينة ضمن إطار منقط -->
+          <div class="sticker-preview mb-4">
+            <!-- الملصق الحقيقي بالحجم النهائي -->
+            <div class="sticker">
+              
+              <!-- اسم الشركة في الأعلى -->
+              <div class="shop">الصقري للإتصالات</div>
+              
+              <!-- الباركود في الوسط -->
+              <div class="sticker-barcode">
+                <img
+                  src="{{ url_for('get_barcode', phone_number=phone.phone_number) }}"
+                  alt="Barcode">
+              </div>
+
+              <!-- تفاصيل الجهاز في الأسفل -->
+              
+                <div class="rows">
+                  <div class="row2">
+                    <div class="label">رقم الجهاز</div>
+                    <div class="value">{{ phone.phone_number }}</div>
+                  </div>
+                  <div class="row2">
+                    <div class="label">نسبة البطارية</div>
+                    <div class="value">
+                      {% if phone.condition == 'used' and phone.age %}
+                        {{ phone.age }}
+                      {% else %}
+                        100
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="row2">
+                    <div class="label">الذاكرة</div>
+                    <div class="value">
+                      {% if phone.phone_memory %}
+                        {{ phone.phone_memory }}
+                      {% else %}
+                        512
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              
+
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('download_barcode_pdf', phone_number=phone.phone_number) }}" class="btn btn-success">تحميل PDF</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">العودة للوحة التحكم</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ============ شاشة ============ */
+.sticker-preview{
+  border:2px dashed #cfcfcf;
+  padding:20px;
+  background:#f9f9f9;
+  border-radius:10px;
+  display:flex;
+  justify-content:center;
+}
+
+/* حجم الملصق الفعلي: عمودي مثل الصورة */
+.sticker{
+  width:6cm;
+  height:3cm;
+  background:#fff;
+  border:1px solid #ddd;
+  box-sizing:border-box;
+
+  /* تخطيط عمودي: اسم الشركة، باركود، تفاصيل */
+  display:flex;
+  flex-direction:column;
+  padding:0.2cm;
+  gap:0.15cm;
+}
+
+/* اسم الشركة في الأعلى */
+.shop{
+  text-align:center;
+  font-weight:700;
+  font-size:4mm;
+  line-height:1.1;
+  margin-bottom:0.1cm;
+}
+
+/* الباركود في الوسط */
+.sticker-barcode{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0.1cm 0;
+}
+.sticker-barcode img{
+  width:80%;
+  height:auto;
+  max-height:1cm;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  display:block;
+}
+
+/* تفاصيل الجهاز في الأسفل */
+.sticker-card{
+  border:1px solid #d9d9d9;
+  border-radius:2px;
+  padding:0.1cm;
+  display:flex;
+  flex-direction:column;
+  gap:0.05cm;
+}
+
+.rows{ 
+  display:flex; 
+  flex-direction:row; 
+  gap:0.1cm; 
+  justify-content:space-between;
+}
+
+.row2{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  font-size:2.5mm;
+  line-height:1.05;
+  text-align:center;
+}
+.label{ color:#222; font-weight:600; text-align:center; }
+.value{ color:#000; font-weight:700; text-align:center; }
+
+/* ============ طباعة ============ */
+@page{
+  size: auto;           /* تستخدم الطابعة حجم الورقة/الملصق */
+  margin: 5mm;          /* عدّلها حسب بكرات الملصقات لديك */
+}
+@media print{
+  body{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .navbar, .btn, .card-header, .container > .row:first-child .col-12 .alert { display:none !important; }
+  .card, .card-body, .sticker-preview{ border:none !important; background:#fff !important; padding:0 !important; }
+
+  /* الملصق يبقى بالحجم السنتيمتري المحدد */
+  .sticker{ 
+    border:none; 
+    width:6cm;
+    height:3cm;
+  }
+
+  /* اختياري: محاذاة الملصق أعلى يسار الصفحة لتسلسل الطباعة */
+  html,body{ width:100%; }
+}
+</style>
+{% endblock %}
