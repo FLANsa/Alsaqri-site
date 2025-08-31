@@ -60,6 +60,48 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Initialize database on app startup
+def create_admin_user():
+    """Create admin user if it doesn't exist"""
+    try:
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin = User(
+                username='admin', 
+                password=generate_password_hash('admin123'), 
+                is_admin=True,
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("Admin user created successfully!")
+        else:
+            print("Admin user already exists!")
+    except Exception as e:
+        print(f"Error creating admin user: {e}")
+        db.session.rollback()
+
+def initialize_database():
+    """Initialize database with proper error handling"""
+    try:
+        # Check if tables exist by trying to query
+        User.query.first()
+        print("Database tables already exist!")
+    except Exception:
+        print("Creating database tables...")
+        try:
+            db.create_all()
+            print("Database tables created successfully!")
+        except Exception as e:
+            print(f"Error creating tables: {e}")
+            return False
+    
+    # Create admin user
+    create_admin_user()
+    return True
+
+with app.app_context():
+    initialize_database()
+
 # Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -205,19 +247,6 @@ class SaleItem(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
-
-# Create admin user if not exists
-def create_admin_user():
-    admin = User.query.filter_by(username='admin').first()
-    if not admin:
-        admin = User(
-            username='admin', 
-            password=generate_password_hash('admin123'), 
-            is_admin=True,
-        )
-        db.session.add(admin)
-        db.session.commit()
-        print("Admin user created successfully!")
 
 # Create limited user if not exists
 
@@ -1452,8 +1481,8 @@ def get_accessory_categories_ajax():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Create tables if they do not exist
-        create_admin_user()  # Create admin user on startup if missing
+        # Initialize database with proper error handling
+        initialize_database()
     
     # Check if running in production
     if os.environ.get('PORT'):
