@@ -759,6 +759,121 @@ def download_barcode_pdf(phone_number):
     if not phone:
         flash('الهاتف غير موجود', 'error')
         return redirect(url_for('dashboard'))
+    
+    try:
+        # Create complete sticker image first
+        def create_complete_sticker_image():
+            # 600 DPI canvas
+            DPI = 600
+            MM_PER_IN = 25.4
+            PX_PER_MM = DPI / MM_PER_IN
+            W_MM, H_MM = 40, 25
+            width_px = int(W_MM * PX_PER_MM)
+            height_px = int(H_MM * PX_PER_MM)
+            TEXT_SHRINK = 0.72  # Make all text ~10% smaller
+
+            sticker_img = Image.new('RGB', (width_px, height_px), color='white')
+            draw = ImageDraw.Draw(sticker_img)
+            
+            # === 1) Company header (smaller, RTL-correct) ===
+            company_text = ar_text_simple("الصقري للاتصالات")
+            margin_px = int(1.0 * PX_PER_MM)
+            max_company_w = int(width_px * 0.90 * TEXT_SHRINK)
+            company_font = fit_font(draw, company_text, max_company_w, start_size=160, min_size=60)
+            cb = draw.textbbox((0, 0), company_text, font=company_font)
+            cx = width_px // 2
+            cy = int(1.4 * PX_PER_MM)
+            # draw bold by using stroke
+            center_text(draw, cx, cy, company_text, company_font, stroke_width=2)
+
+            # === 2) Barcode (bigger) ===
+            # Expect an already-generated image path in phone.barcode_path (outer scope)
+            if phone.barcode_path and os.path.exists(phone.barcode_path):
+                barcode_img = Image.open(phone.barcode_path)
+                target_bar_w = int(width_px * 0.90)
+                target_bar_h = int(14 * PX_PER_MM)  # 14 mm tall
+                barcode_img = barcode_img.resize((target_bar_w, target_bar_h), Image.LANCZOS)
+                bar_x = (width_px - target_bar_w) // 2
+                bar_y = cb[3] + int(1.0 * PX_PER_MM)
+                sticker_img.paste(barcode_img, (bar_x, bar_y))
+            else:
+                # simple fallback pattern
+                target_bar_w = int(width_px * 0.90)
+                target_bar_h = int(14 * PX_PER_MM)
+                bar_x = (width_px - target_bar_w) // 2
+                bar_y = cb[3] + int(1.0 * PX_PER_MM)
+                for i in range(0, target_bar_w, 8):
+                    draw.rectangle([bar_x + i, bar_y, bar_x + i + 4, bar_y + target_bar_h], fill='black')
+
+            # === 3) Bottom details (larger) ===
+            # Labels (Arabic, RTL)
+            detail_label  = ar_text_simple("رقم الجهاز")
+            battery_label = ar_text_simple("نسبة البطارية")
+            memory_label  = ar_text_simple("الذاكرة")
+
+            # Values (numbers stay LTR; wrap with LRM)
+            device_val  = LRM + (str(phone.phone_number) if phone.phone_number else "") + LRM
+            battery_val = LRM + (str(phone.age) if (phone.condition == "used" and phone.age) else "100") + LRM
+            memory_val  = LRM + (phone.phone_memory if phone.phone_memory else "512") + LRM
+
+            col_w = width_px // 3
+            c1 = col_w // 2
+            c2 = col_w + col_w // 2
+            c3 = 2 * col_w + col_w // 2
+
+            baseline_y = height_px - int(4.2 * PX_PER_MM)
+
+            # Make labels & values bigger (with TEXT_SHRINK applied)
+            max_col_w = int((col_w - 2 * margin_px) * TEXT_SHRINK)
+            label_font = fit_font(draw, detail_label, max_col_w, start_size=80, min_size=44)
+            value_font = fit_font(draw, device_val,  max_col_w, start_size=96, min_size=56)
+
+            # Column 1
+            center_text(draw, c1, baseline_y - int(2.8 * PX_PER_MM), detail_label, label_font)
+            center_text(draw, c1, baseline_y - int(0.8 * PX_PER_MM), device_val,  value_font)
+
+            # Column 2
+            center_text(draw, c2, baseline_y - int(2.8 * PX_PER_MM), battery_label, label_font)
+            center_text(draw, c2, baseline_y - int(0.8 * PX_PER_MM), battery_val,  value_font)
+
+            # Column 3
+            center_text(draw, c3, baseline_y - int(2.8 * PX_PER_MM), memory_label, label_font)
+            center_text(draw, c3, baseline_y - int(0.8 * PX_PER_MM), memory_val,  value_font)
+
+            return sticker_img
+        
+        # Create the complete sticker image
+        sticker_img = create_complete_sticker_image()
+        
+        # Save sticker image temporarily with high quality
+        sticker_temp_path = f"static/barcodes/sticker_{phone_number}.png"
+        sticker_img.save(sticker_temp_path, 'PNG', optimize=False, quality=100)
+        
+        # Create PDF with the sticker image - 40.0mm x 25.0mm
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=(40*mm, 25*mm))
+        
+        # Add the complete sticker image to PDF
+        p.drawImage(sticker_temp_path, 0, 0, width=40*mm, height=25*mm)
+        
+        p.showPage()
+        p.save()
+        
+        # Clean up temp file
+        if os.path.exists(sticker_temp_path):
+            os.remove(sticker_temp_path)
+        
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'barcode_{phone_number}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        flash(f'خطأ في إنشاء PDF: {str(e)}', 'error')
+        return redirect(url_for('print_barcode', phone_number=phone_number))
 
 @app.route('/download_accessory_barcode_pdf/<barcode>')
 @login_required
@@ -1022,7 +1137,7 @@ def generate_unique_phone_number():
     else:
         # Convert the highest phone number to integer and increment
         try:
-        next_number = int(highest_phone) + 1
+            next_number = int(highest_phone) + 1
         except ValueError:
             # If there's an issue with the phone number format, start from 1
             next_number = 1
@@ -1087,7 +1202,7 @@ def add_new_phone():
             
             # Generate barcode automatically
             try:
-            barcode_path = generate_barcode(phone_number=phone_number)
+                barcode_path = generate_barcode(phone_number=phone_number)
             except Exception as e:
                 print(f"Barcode generation failed: {str(e)}")
                 barcode_path = None
