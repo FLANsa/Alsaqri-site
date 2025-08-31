@@ -608,12 +608,10 @@ def limited_dashboard():
 
 def generate_barcode(phone_number, battery_age=None):
     """Generate barcode for phone with sticker design"""
-    # Create barcode data with phone number and battery age
+    # Use only phone number in barcode (remove battery age)
     barcode_data = phone_number
-    if battery_age is not None:
-        barcode_data += f"|B{battery_age:03d}"
     
-    # Create barcode with enhanced data
+    # Create barcode with phone number only
     barcode_class = barcode.get_barcode_class('code128')
     barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
     
@@ -995,8 +993,8 @@ def add_used_phone():
                 flash(str(e), 'error')
                 return redirect(url_for('add_used_phone'))
             
-            # Generate barcode automatically with battery age
-            barcode_path = generate_barcode(phone_number=phone_number, battery_age=age)
+            # Generate barcode automatically (phone number only)
+            barcode_path = generate_barcode(phone_number=phone_number)
             
             used_phone = Phone(
                 brand=brand,
