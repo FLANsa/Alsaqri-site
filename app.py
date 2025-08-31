@@ -247,6 +247,113 @@ def create_limited_user():
         print(f"Error creating limited user: {e}")
         db.session.rollback()
 
+def add_common_phone_types():
+    """Add common phone brands and models to the database"""
+    try:
+        # Check if phone types already exist
+        existing_count = PhoneType.query.count()
+        if existing_count > 0:
+            print(f"Phone types already exist ({existing_count} entries). Skipping initialization.")
+            return
+        
+        print("Adding common phone types to database...")
+        
+        # Common phone brands and models popular in Saudi Arabia
+        common_phones = {
+            "آيفون": [
+                "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15",
+                "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14",
+                "iPhone 13 Pro Max", "iPhone 13 Pro", "iPhone 13", "iPhone 13 mini",
+                "iPhone 12 Pro Max", "iPhone 12 Pro", "iPhone 12", "iPhone 12 mini",
+                "iPhone 11 Pro Max", "iPhone 11 Pro", "iPhone 11", "iPhone 11 Pro Max",
+                "iPhone XS Max", "iPhone XS", "iPhone XR", "iPhone X",
+                "iPhone 8 Plus", "iPhone 8", "iPhone 7 Plus", "iPhone 7",
+                "iPhone SE (2022)", "iPhone SE (2020)", "iPhone SE (2016)"
+            ],
+            "سامسونج": [
+                "Galaxy S24 Ultra", "Galaxy S24+", "Galaxy S24",
+                "Galaxy S23 Ultra", "Galaxy S23+", "Galaxy S23",
+                "Galaxy S22 Ultra", "Galaxy S22+", "Galaxy S22",
+                "Galaxy S21 Ultra", "Galaxy S21+", "Galaxy S21",
+                "Galaxy S20 Ultra", "Galaxy S20+", "Galaxy S20",
+                "Galaxy Note 20 Ultra", "Galaxy Note 20",
+                "Galaxy Z Fold 5", "Galaxy Z Fold 4", "Galaxy Z Fold 3",
+                "Galaxy Z Flip 5", "Galaxy Z Flip 4", "Galaxy Z Flip 3",
+                "Galaxy A55", "Galaxy A35", "Galaxy A25", "Galaxy A15",
+                "Galaxy A54", "Galaxy A34", "Galaxy A24", "Galaxy A14",
+                "Galaxy A53", "Galaxy A33", "Galaxy A23", "Galaxy A13",
+                "Galaxy M54", "Galaxy M34", "Galaxy M14"
+            ],
+            "هواوي": [
+                "P60 Pro", "P60", "P50 Pro", "P50", "P40 Pro", "P40",
+                "Mate 60 Pro", "Mate 60", "Mate 50 Pro", "Mate 50",
+                "Mate 40 Pro", "Mate 40", "Mate 30 Pro", "Mate 30",
+                "Nova 11", "Nova 10", "Nova 9", "Nova 8",
+                "Y90", "Y70", "Y60", "Y50"
+            ],
+            "شاومي": [
+                "Redmi Note 13 Pro+", "Redmi Note 13 Pro", "Redmi Note 13",
+                "Redmi Note 12 Pro+", "Redmi Note 12 Pro", "Redmi Note 12",
+                "Redmi Note 11 Pro+", "Redmi Note 11 Pro", "Redmi Note 11",
+                "Redmi 13C", "Redmi 12C", "Redmi 11C",
+                "POCO X6 Pro", "POCO X6", "POCO X5 Pro", "POCO X5",
+                "POCO F5 Pro", "POCO F5", "POCO F4", "POCO F3"
+            ],
+            "أوبو": [
+                "Find X7 Ultra", "Find X7", "Find X6 Pro", "Find X6",
+                "Find X5 Pro", "Find X5", "Find X3 Pro", "Find X3",
+                "Reno 11 Pro", "Reno 11", "Reno 10 Pro", "Reno 10",
+                "Reno 9 Pro", "Reno 9", "Reno 8 Pro", "Reno 8",
+                "A98", "A78", "A58", "A38"
+            ],
+            "فيفو": [
+                "X100 Pro", "X100", "X90 Pro", "X90",
+                "X80 Pro", "X80", "X70 Pro", "X70",
+                "V29", "V27", "V25", "V23",
+                "Y100", "Y78", "Y56", "Y35"
+            ],
+            "ون بلس": [
+                "OnePlus 12", "OnePlus 11", "OnePlus 10 Pro", "OnePlus 10T",
+                "OnePlus 9 Pro", "OnePlus 9", "OnePlus 8 Pro", "OnePlus 8T",
+                "OnePlus Nord 3", "OnePlus Nord 2T", "OnePlus Nord 2",
+                "OnePlus Nord CE 3", "OnePlus Nord CE 2"
+            ],
+            "ريلمي": [
+                "Realme GT Neo 5", "Realme GT Neo 4", "Realme GT Neo 3",
+                "Realme 11 Pro+", "Realme 11 Pro", "Realme 11",
+                "Realme 10 Pro+", "Realme 10 Pro", "Realme 10",
+                "Realme 9 Pro+", "Realme 9 Pro", "Realme 9",
+                "Realme C67", "Realme C55", "Realme C35"
+            ],
+            "نوكيا": [
+                "Nokia G60", "Nokia G50", "Nokia G42", "Nokia G22",
+                "Nokia XR21", "Nokia XR20", "Nokia X20", "Nokia X10",
+                "Nokia C32", "Nokia C31", "Nokia C22", "Nokia C21"
+            ],
+            "هونر": [
+                "Honor Magic 6 Pro", "Honor Magic 6", "Honor Magic 5 Pro", "Honor Magic 5",
+                "Honor 90 Pro", "Honor 90", "Honor 80 Pro", "Honor 80",
+                "Honor 70 Pro", "Honor 70", "Honor 60 Pro", "Honor 60",
+                "Honor X9a", "Honor X8", "Honor X7"
+            ]
+        }
+        
+        # Add phone types to database
+        for brand, models in common_phones.items():
+            for model in models:
+                # Check if this phone type already exists
+                existing = PhoneType.query.filter_by(brand=brand, model=model).first()
+                if not existing:
+                    phone_type = PhoneType(brand=brand, model=model)
+                    db.session.add(phone_type)
+        
+        db.session.commit()
+        print(f"Successfully added {sum(len(models) for models in common_phones.values())} common phone types to database.")
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding common phone types: {e}")
+
 def initialize_database():
     """Initialize database with proper error handling"""
     try:
@@ -266,6 +373,8 @@ def initialize_database():
     create_admin_user()
     # Create limited user
     create_limited_user()
+    # Add common phone types
+    add_common_phone_types()
     return True
 
 # Initialize database on app startup
@@ -273,9 +382,6 @@ with app.app_context():
     initialize_database()
 
 # Create limited user if not exists
-
-
-
 
 # Routes
 @app.route('/')
@@ -1526,6 +1632,22 @@ def get_accessory_categories_ajax():
         return jsonify({'success': True, 'categories': category_list})
     except Exception as e:
         return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'})
+
+@app.route('/add_common_phones')
+@login_required
+def add_common_phones_route():
+    """Route to manually add common phone types"""
+    if not current_user.is_admin:
+        flash('غير مصرح لك بالوصول لهذه الصفحة', 'error')
+        return redirect(url_for('dashboard'))
+    
+    try:
+        add_common_phone_types()
+        flash('تم إضافة الهواتف الشائعة بنجاح', 'success')
+    except Exception as e:
+        flash(f'حدث خطأ: {str(e)}', 'error')
+    
+    return redirect(url_for('dashboard'))
 
 # sell_phone route removed - replaced by comprehensive sales system
 
