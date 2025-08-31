@@ -603,9 +603,9 @@ def dashboard():
     total_accessories = sum(acc.quantity_in_stock for acc in accessories)
     total_items = total_phones + total_accessories
     
-    # Phone values
-    phone_purchase_value = sum(phone.purchase_price for phone in phones)
-    phone_selling_value = sum(phone.selling_price for phone in phones)
+    # Phone values (with VAT included)
+    phone_purchase_value = sum(phone.purchase_price_with_vat for phone in phones)
+    phone_selling_value = sum(phone.selling_price_with_vat for phone in phones)
     
     # Accessory values (considering quantity in stock)
     accessory_purchase_value = sum(acc.purchase_price_with_vat * acc.quantity_in_stock for acc in accessories)
@@ -627,16 +627,16 @@ def dashboard():
     total_sales_subtotal = sum(sale.subtotal for sale in Sale.query.all())
     total_vat_amount = sum(sale.vat_amount for sale in Sale.query.all())
     
-    # Calculate actual profit from completed sales
+    # Calculate actual profit from completed sales (using VAT-included values)
     total_actual_profit = 0.0
     all_sales = Sale.query.all()
     
     for sale in all_sales:
         for item in sale.items:
-            # Calculate profit using stored purchase price
-            selling_price_without_vat = item.unit_price / (1 + VAT_RATE)
-            purchase_price_without_vat = item.purchase_price / (1 + VAT_RATE)
-            profit = selling_price_without_vat - purchase_price_without_vat
+            # Calculate profit using VAT-included prices
+            selling_price_with_vat = item.unit_price * (1 + VAT_RATE)
+            purchase_price_with_vat = item.purchase_price * (1 + VAT_RATE)
+            profit = selling_price_with_vat - purchase_price_with_vat
             total_actual_profit += profit * item.quantity
     
     return render_template('dashboard.html', 
