@@ -618,14 +618,14 @@ def generate_barcode(phone_number, battery_age=None):
         barcode_class = barcode.get_barcode_class('code128')
         barcode_instance = barcode_class(barcode_data, writer=ImageWriter())
         
-        # Set custom options for the barcode (optimized for smaller sticker)
+        # Set custom options for the barcode (optimized for high quality)
         options = {
-            'module_width': 0.15,  # Width of each bar (reduced from 0.2)
-            'module_height': 6,    # Height of the barcode (reduced from 8)
+            'module_width': 0.2,   # Width of each bar (increased for better quality)
+            'module_height': 8,    # Height of the barcode (increased for better quality)
             'write_text': False,   # Hide the text below barcode (use this instead of font_size)
             'text_distance': 0.3,  # Distance between barcode and text (reduced from 0.5)
             'quiet_zone': 0.3,     # Quiet zone around the barcode (reduced from 0.5)
-            'dpi': 203            # DPI optimized for thermal printers
+            'dpi': 300            # Higher DPI for better quality
         }
         
         # Create barcodes directory if it doesn't exist
@@ -684,11 +684,11 @@ def download_barcode_pdf(phone_number):
         def create_complete_sticker_image():
             from PIL import Image, ImageDraw, ImageFont
             
-            # Create image with exact dimensions (40mm x 25mm at 300 DPI)
-            width_px = int(40 * 11.811)  # 40mm at 300 DPI
-            height_px = int(25 * 11.811)  # 25mm at 300 DPI
+            # Create image with higher resolution (40mm x 25mm at 600 DPI for better quality)
+            width_px = int(40 * 23.622)  # 40mm at 600 DPI (doubled resolution)
+            height_px = int(25 * 23.622)  # 25mm at 600 DPI (doubled resolution)
             
-            # Create white background
+            # Create white background with high quality
             sticker_img = Image.new('RGB', (width_px, height_px), color='white')
             draw = ImageDraw.Draw(sticker_img)
             
@@ -715,29 +715,29 @@ def download_barcode_pdf(phone_number):
             
             # Company name at top - مطابق للصفحة
             company_text = "الصقري للإتصالات"
-            # Use smaller font for company name to fit 40mm x 25mm sticker
+            # Use larger font for company name with higher resolution
             try:
-                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 16)
+                company_font = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 32)  # Doubled font size
             except:
                 try:
-                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 16)
+                    company_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 32)  # Doubled font size
                 except:
                     company_font = arabic_font
             
             bbox = draw.textbbox((0, 0), company_text, font=company_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
-            x = (width_px - text_width) // 2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
-            y = 3  # Very top for smaller sticker
+            x = (width_px - text_width) // 2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
+            y = 6  # Very top for smaller sticker (doubled)
             draw.text((x, y), company_text, fill='black', font=company_font)
             
             # Barcode in center - مطابق للصفحة
             if phone.barcode_path and os.path.exists(phone.barcode_path):
                 try:
                     barcode_img = Image.open(phone.barcode_path)
-                    # Resize barcode to 80% width for 40mm x 25mm sticker - make it more visible
+                    # Resize barcode to 80% width for 40mm x 25mm sticker - make it more visible with higher resolution
                     barcode_width = int(width_px * 0.80)  # 80% of sticker width for better visibility
-                    barcode_height = int(10 * 11.811)  # 10mm height for better visibility
+                    barcode_height = int(10 * 23.622)  # 10mm height for better visibility (adjusted for 600 DPI)
                     barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.LANCZOS)
                     
                     # Paste barcode with fine-tuned positioning - below company name
@@ -751,12 +751,12 @@ def download_barcode_pdf(phone_number):
                 print(f"Barcode path not found: {phone.barcode_path}")
                 # Create a simple barcode placeholder
                 barcode_width = int(width_px * 0.80)
-                barcode_height = int(10 * 11.811)
+                barcode_height = int(10 * 23.622)  # Adjusted for 600 DPI
                 barcode_x = (width_px - barcode_width) // 2  # Perfectly center the barcode
                 barcode_y = (height_px - barcode_height) // 2  # Perfectly center vertically
                 # Draw a simple barcode pattern
-                for i in range(0, barcode_width, 4):
-                    draw.rectangle([barcode_x + i, barcode_y, barcode_x + i + 2, barcode_y + barcode_height], fill='black')
+                for i in range(0, barcode_width, 8):  # Doubled spacing for higher resolution
+                    draw.rectangle([barcode_x + i, barcode_y, barcode_x + i + 4, barcode_y + barcode_height], fill='black')
                 print(f"Created placeholder barcode at ({barcode_x}, {barcode_y})")
             
             # Device details at bottom - مطابق للصفحة
@@ -765,10 +765,10 @@ def download_barcode_pdf(phone_number):
             
             # Calculate positions for 3 columns like in page - تحسين الترتيب
             col_width = width_px // 3
-            start_y = height_px - 35  # Adjusted for smaller sticker - more compact
+            start_y = height_px - 70  # Adjusted for higher resolution sticker - more compact (doubled)
             
-            # Use smaller font for details
-            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 6) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font
+            # Use larger font for details with higher resolution
+            detail_font_small = ImageFont.truetype('/System/Library/Fonts/Arial.ttf', 12) if os.path.exists('/System/Library/Fonts/Arial.ttf') else detail_font  # Doubled font size
             
             # Device number - Column 1
             device_label = "رقم الجهاز"
@@ -776,48 +776,48 @@ def download_barcode_pdf(phone_number):
             # Center text in column with more spacing
             bbox1 = draw.textbbox((0, 0), device_label, font=detail_font_small)
             label_width1 = bbox1[2] - bbox1[0]
-            x1 = col_width//2 - label_width1//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
+            x1 = col_width//2 - label_width1//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
             draw.text((x1, start_y), device_label, fill='black', font=detail_font_small)
             
             bbox1_val = draw.textbbox((0, 0), device_value, font=detail_font_small)
             value_width1 = bbox1_val[2] - bbox1_val[0]
-            x1_val = col_width//2 - value_width1//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
-            draw.text((x1_val, start_y + 10), device_value, fill='black', font=detail_font_small)
+            x1_val = col_width//2 - value_width1//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
+            draw.text((x1_val, start_y + 20), device_value, fill='black', font=detail_font_small)  # Doubled spacing
             
             # Battery percentage - Column 2
             battery_value = str(phone.age) if phone.condition == 'used' and phone.age else "100"
             battery_label = "نسبة البطارية"
             bbox2 = draw.textbbox((0, 0), battery_label, font=detail_font_small)
             label_width2 = bbox2[2] - bbox2[0]
-            x2 = col_width + col_width//2 - label_width2//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
+            x2 = col_width + col_width//2 - label_width2//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
             draw.text((x2, start_y), battery_label, fill='black', font=detail_font_small)
             
             bbox2_val = draw.textbbox((0, 0), battery_value, font=detail_font_small)
             value_width2 = bbox2_val[2] - bbox2_val[0]
-            x2_val = col_width + col_width//2 - value_width2//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
-            draw.text((x2_val, start_y + 10), battery_value, fill='black', font=detail_font_small)
+            x2_val = col_width + col_width//2 - value_width2//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
+            draw.text((x2_val, start_y + 20), battery_value, fill='black', font=detail_font_small)  # Doubled spacing
             
             # Memory - Column 3
             memory_value = phone.phone_memory if phone.phone_memory else "512"
             memory_label = "الذاكرة"
             bbox3 = draw.textbbox((0, 0), memory_label, font=detail_font_small)
             label_width3 = bbox3[2] - bbox3[0]
-            x3 = 2*col_width + col_width//2 - label_width3//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
+            x3 = 2*col_width + col_width//2 - label_width3//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
             draw.text((x3, start_y), memory_label, fill='black', font=detail_font_small)
             
             bbox3_val = draw.textbbox((0, 0), memory_value, font=detail_font_small)
             value_width3 = bbox3_val[2] - bbox3_val[0]
-            x3_val = 2*col_width + col_width//2 - value_width3//2 + int(1.5 * 11.811)  # Move 0.15cm to the right (reduced from 0.3cm)
-            draw.text((x3_val, start_y + 10), memory_value, fill='black', font=detail_font_small)
+            x3_val = 2*col_width + col_width//2 - value_width3//2 + int(1.5 * 23.622)  # Move 0.15cm to the right (adjusted for 600 DPI)
+            draw.text((x3_val, start_y + 20), memory_value, fill='black', font=detail_font_small)  # Doubled spacing
             
             return sticker_img
         
         # Create the complete sticker image
         sticker_img = create_complete_sticker_image()
         
-        # Save sticker image temporarily
+        # Save sticker image temporarily with high quality
         sticker_temp_path = f"static/barcodes/sticker_{phone_number}.png"
-        sticker_img.save(sticker_temp_path, 'PNG')
+        sticker_img.save(sticker_temp_path, 'PNG', optimize=False, quality=100)
         
         # Create PDF with the sticker image - 40.0mm x 25.0mm
         buffer = BytesIO()
