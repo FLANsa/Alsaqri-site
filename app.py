@@ -40,9 +40,7 @@ def ar_text(text: str) -> str:
     if contains_arabic(text):
         shaped = arabic_reshaper.reshape(text)
         # Use RTL base direction for proper Arabic text ordering
-        result = get_display(shaped, base_dir='rtl')
-        print(f"Arabic text processing: '{text}' -> '{result}'")
-        return result
+        return get_display(shaped, base_dir='rtl')
     return text  # leave numbers/Latin as-is
 
 def ar_text_simple(text: str) -> str:
@@ -53,14 +51,15 @@ def ar_text_simple(text: str) -> str:
     return text
 
 FONT_CANDIDATES = [
-    "static/fonts/NotoNaskhArabic-Regular.ttf",
-    "static/fonts/NotoKufiArabic-Regular.ttf",
-    "static/fonts/Amiri-Regular.ttf",
-    "C:/Windows/Fonts/arial.ttf",
     "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-    "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
-    "/usr/share/fonts/truetype/noto/NotoKufiArabic-Regular.ttf",
+    "/System/Library/Fonts/Arial.ttf",
+    "/System/Library/Fonts/Helvetica.ttc",
+    "/System/Library/Fonts/STHeiti Light.ttc",
+    "/System/Library/Fonts/STHeiti Medium.ttc",
+    "C:/Windows/Fonts/arial.ttf",
+    "C:/Windows/Fonts/calibri.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
 ]
 
 def load_font(size: int) -> ImageFont.FreeTypeFont:
@@ -68,13 +67,10 @@ def load_font(size: int) -> ImageFont.FreeTypeFont:
         if os.path.exists(p):
             try:
                 font = ImageFont.truetype(p, size)
-                print(f"Loaded font: {p} at size {size}")
                 return font
-            except Exception as e:
-                print(f"Failed to load font {p}: {e}")
+            except Exception:
                 continue
     # Fallback to default font if no TTF fonts are available
-    print("Warning: No Arabic TTF fonts found, using default font")
     return ImageFont.load_default()
 
 def fit_font(draw: ImageDraw.ImageDraw, text: str, max_width_px: int, start_size: int, min_size: int = 28):
