@@ -202,80 +202,93 @@
 
 <!-- Receipt Roll Printer Template (Hidden by default, shown only when printing) -->
 <div id="receipt-roll-template" class="receipt-template">
-    <div class="receipt-header">
-        <div class="company-info">
-            <h1>{{ sale.company_name }}</h1>
-            <p>الرقم الضريبي: {{ sale.company_vat_number }}</p>
-            <p>{{ sale.company_address }}</p>
-            <p>هاتف: {{ sale.company_phone }}</p>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <div class="company-info">
+                <h1>الصقري للإتصالات</h1>
+                <p>AL SAQRI TELECOM</p>
+                <p>الجوال: {{ sale.company_phone or '0505663222' }}</p>
+                <p>الرقم الضريبي: {{ sale.company_vat_number or '310105614500003' }}</p>
+                <p>السجل التجاري: 1131281064</p>
+                <p>العنوان: {{ sale.company_address or 'القصيم بريده الصفراء' }}</p>
+                <p>اسواق النافوره</p>
+            </div>
+            
+            <div class="sale-info">
+                <h2>فاتورة ضريبية مبسطة</h2>
+                <p>فاتورة: {{ sale.sale_number }}</p>
+                <p>تاريخ الفاتورة: {{ sale.date_created.strftime('%d/%m/%Y') }}</p>
+            </div>
+            
+            {% if sale.customer_name and sale.customer_name != 'عميل نقدي' or sale.customer_phone %}
+            <div class="customer-info">
+                <h3>معلومات العميل</h3>
+                {% if sale.customer_name and sale.customer_name != 'عميل نقدي' %}
+                <p>اسم العميل: {{ sale.customer_name }}</p>
+                {% endif %}
+                {% if sale.customer_phone %}
+                <p>رقم الجوال: {{ sale.customer_phone }}</p>
+                {% endif %}
+                <p>الرقم الضريبي: </p>
+            </div>
+            {% endif %}
         </div>
         
-        <div class="sale-info">
-            <h2>فاتورة مبيعات</h2>
-            <p>رقم العملية: {{ sale.sale_number }}</p>
-            <p>التاريخ: {{ sale.date_created.strftime('%Y-%m-%d %H:%M') }}</p>
-            <p>طريقة الدفع: {{ sale.payment_method }}</p>
+        <div class="receipt-items">
+            <h3>تفاصيل المنتجات</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>الكمية</th>
+                        <th>المنتج</th>
+                        <th>السعر غير شامل الضريبة</th>
+                        <th>السعر شامل الضريبة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sale.items %}
+                    <tr>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ "%.2f"|format(item.unit_price / 1.15) }}</td>
+                        <td>{{ "%.2f"|format(item.unit_price) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         
-        {% if sale.customer_name and sale.customer_name != 'عميل نقدي' or sale.customer_phone or sale.customer_address %}
-        <div class="customer-info">
-            <h3>معلومات العميل</h3>
-            {% if sale.customer_name and sale.customer_name != 'عميل نقدي' %}
-            <p>الاسم: {{ sale.customer_name }}</p>
-            {% endif %}
-            {% if sale.customer_phone %}
-            <p>الهاتف: {{ sale.customer_phone }}</p>
-            {% endif %}
-            {% if sale.customer_address %}
-            <p>العنوان: {{ sale.customer_address }}</p>
-            {% endif %}
+        <div class="receipt-summary">
+            <div class="summary-row">
+                <span>الاجمالي غير شامل الضريبة:</span>
+                <span>{{ "%.2f"|format(sale.subtotal) }} ريال</span>
+            </div>
+            <div class="summary-row">
+                <span>ضريبة القيمة المضافة 15%:</span>
+                <span>{{ "%.2f"|format(sale.vat_amount) }} ريال</span>
+            </div>
+            <div class="summary-row total">
+                <span>الاجمالي شامل الضريبة:</span>
+                <span>{{ "%.2f"|format(sale.total_amount) }} ريال</span>
+            </div>
         </div>
-        {% endif %}
-    </div>
-    
-    <div class="receipt-items">
-        <h3>المنتجات المباعة</h3>
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>المنتج</th>
-                    <th>السعر</th>
-                    <th>الكمية</th>
-                    <th>المجموع</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in sale.items %}
-                <tr>
-                    <td>{{ item.product_name }}</td>
-                    <td>{{ "%.2f"|format(item.unit_price) }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ "%.2f"|format(item.total_price) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="receipt-summary">
-        <div class="summary-row">
-            <span>المجموع قبل الضريبة:</span>
-            <span>{{ "%.2f"|format(sale.subtotal) }} ريال</span>
+        
+        <div class="seller-info">
+            <p>اسم البائع: {{ current_user.username or 'لؤي' }}</p>
         </div>
-        <div class="summary-row">
-            <span>الضريبة (15%):</span>
-            <span>{{ "%.2f"|format(sale.vat_amount) }} ريال</span>
+        
+        <div class="receipt-footer">
+            <h4>سياسة الاستبدال والاسترجاع</h4>
+            <p>1) الاجهزة الجديدة ضمانها عند الوكيل</p>
+            <p>2) والاجهزة المستخدمة تستبدل ولا تسترجع</p>
+            <p>في حال وجود عطل داخلي يشمل ضمان</p>
+            <p>المستخدم في حال وجود كامل الملحقات</p>
+            <div class="qr-placeholder">
+                <p>[QR Code]</p>
+            </div>
+            <p>شكرا لزيارتكم الصقري للإتصالات</p>
+            <p>تاريخ الطباعة: <span id="print-date"></span></p>
         </div>
-        <div class="summary-row total">
-            <span>المبلغ الإجمالي:</span>
-            <span>{{ "%.2f"|format(sale.total_amount) }} ريال</span>
-        </div>
-    </div>
-    
-    <div class="receipt-footer">
-        <p>شكراً لزيارتكم</p>
-        <p>نتمنى لكم تجربة تسوق ممتعة</p>
-        <p>تاريخ الطباعة: <span id="print-date"></span></p>
     </div>
 </div>
 
@@ -487,64 +500,77 @@ function printReceipt() {
             <style>
                 body {
                     margin: 0;
-                    padding: 5mm 5mm 5mm 10mm;
-                    font-family: 'Courier New', monospace;
-                    font-size: 14px;
-                    line-height: 1.3;
+                    padding: 0;
+                    font-family: 'Arial', 'Tahoma', sans-serif;
+                    font-size: 12px;
+                    line-height: 1.4;
                     color: black;
                     background: white;
+                    direction: rtl;
+                    text-align: right;
+                }
+                
+                .receipt-container {
                     width: 80mm;
                     max-width: 80mm;
-                    margin-left: 5mm;
+                    margin: 0 10mm 0 auto;
+                    padding: 5mm;
+                    box-sizing: border-box;
                 }
                 
                 .receipt-header {
                     text-align: center;
-                    margin-bottom: 20px;
-                    border-bottom: 1px dashed #000;
-                    padding-bottom: 15px;
+                    margin-bottom: 15px;
+                    border-bottom: 1px solid #000;
+                    padding-bottom: 10px;
                 }
                 
                 .company-info h1 {
-                    font-size: 20px;
-                    margin: 0 0 10px 0;
+                    font-size: 18px;
+                    margin: 0 0 8px 0;
                     font-weight: bold;
+                    text-align: center;
                 }
                 
                 .company-info p {
-                    margin: 3px 0;
-                    font-size: 13px;
+                    margin: 2px 0;
+                    font-size: 11px;
+                    text-align: center;
                 }
                 
                 .sale-info h2 {
-                    font-size: 18px;
-                    margin: 15px 0 10px 0;
+                    font-size: 16px;
+                    margin: 12px 0 8px 0;
                     font-weight: bold;
+                    text-align: center;
                 }
                 
                 .sale-info p {
-                    margin: 3px 0;
-                    font-size: 13px;
+                    margin: 2px 0;
+                    font-size: 11px;
+                    text-align: center;
                 }
                 
                 .customer-info h3 {
-                    font-size: 16px;
-                    margin: 15px 0 8px 0;
+                    font-size: 14px;
+                    margin: 12px 0 6px 0;
                     font-weight: bold;
+                    text-align: right;
                 }
                 
                 .customer-info p {
-                    margin: 2px 0;
-                    font-size: 13px;
+                    margin: 1px 0;
+                    font-size: 11px;
+                    text-align: right;
                 }
                 
                 .receipt-items {
-                    margin: 20px 0;
+                    margin: 15px 0;
                 }
                 
                 .receipt-items h3 {
-                    font-size: 16px;
-                    margin: 0 0 10px 0;
+                    font-size: 14px;
+                    margin: 0 0 8px 0;
                     font-weight: bold;
                     text-align: center;
                 }
@@ -552,33 +578,46 @@ function printReceipt() {
                 .items-table {
                     width: 100%;
                     border-collapse: collapse;
-                    font-size: 12px;
+                    font-size: 9px;
+                    margin: 8px 0;
                 }
                 
                 .items-table th {
                     border-bottom: 1px solid #000;
-                    padding: 5px 2px;
+                    padding: 3px 1px;
                     text-align: center;
                     font-weight: bold;
+                    font-size: 9px;
                 }
                 
                 .items-table td {
-                    padding: 3px 2px;
+                    padding: 2px 1px;
                     text-align: center;
                     border-bottom: 1px dotted #ccc;
+                    font-size: 9px;
                 }
                 
                 .receipt-summary {
-                    margin: 20px 0;
-                    border-top: 1px dashed #000;
-                    padding-top: 15px;
+                    margin: 15px 0;
+                    border-top: 1px solid #000;
+                    padding-top: 10px;
                 }
                 
                 .summary-row {
                     display: flex;
                     justify-content: space-between;
-                    margin: 8px 0;
-                    font-size: 12px;
+                    margin: 6px 0;
+                    font-size: 11px;
+                }
+                
+                .seller-info {
+                    margin: 10px 0;
+                    text-align: right;
+                    font-size: 11px;
+                }
+                
+                .seller-info p {
+                    margin: 2px 0;
                 }
                 
                 .summary-row.total {
@@ -591,14 +630,32 @@ function printReceipt() {
                 
                 .receipt-footer {
                     text-align: center;
-                    margin-top: 25px;
-                    border-top: 1px dashed #000;
-                    padding-top: 15px;
+                    margin-top: 20px;
+                    border-top: 1px solid #000;
+                    padding-top: 10px;
+                }
+                
+                .receipt-footer h4 {
+                    font-size: 12px;
+                    margin: 0 0 8px 0;
+                    font-weight: bold;
                 }
                 
                 .receipt-footer p {
-                    margin: 5px 0;
-                    font-size: 11px;
+                    margin: 3px 0;
+                    font-size: 10px;
+                }
+                
+                .qr-placeholder {
+                    text-align: center;
+                    margin: 10px 0;
+                    padding: 10px;
+                    border: 1px dashed #000;
+                }
+                
+                .qr-placeholder p {
+                    margin: 0;
+                    font-size: 9px;
                 }
                 
                 @media print {
