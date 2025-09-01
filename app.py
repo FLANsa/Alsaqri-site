@@ -207,10 +207,10 @@ class Sale(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Company Information (معلومات الشركة)
-    company_name = db.Column(db.String(200), nullable=False, default="شركة الهواتف الذكية")
-    company_vat_number = db.Column(db.String(50), nullable=False, default="123456789012345")
-    company_address = db.Column(db.Text, nullable=False, default="الرياض، المملكة العربية السعودية")
-    company_phone = db.Column(db.String(20), nullable=False, default="+966-11-123-4567")
+    company_name = db.Column(db.String(200), nullable=False, default="الصقري للاتصالات")
+    company_vat_number = db.Column(db.String(50), nullable=False, default="310105614500003")
+    company_address = db.Column(db.Text, nullable=False, default="القصيم بريده الصفراء اسواق النافوره")
+    company_phone = db.Column(db.String(20), nullable=False, default="0505663222")
     
     # Customer Information (معلومات العميل)
     customer_name = db.Column(db.String(100), nullable=False)
