@@ -166,6 +166,11 @@ class Phone(db.Model):
     phone_color = db.Column(db.String(50))     # لون الجوال
     phone_memory = db.Column(db.String(50))    # الذاكرة
     buyer_name = db.Column(db.String(100))     # اسم المشتري
+    
+    # Status tracking fields
+    status = db.Column(db.String(20), default="available")  # available, sold, returned, etc.
+    sold_date = db.Column(db.DateTime)  # When the phone was sold
+    sale_id = db.Column(db.Integer, db.ForeignKey('sale.id'))  # Link to sale record
 
 class PhoneType(db.Model):
     """نموذج أنواع الهواتف - للتحكم في العلامات التجارية والموديلات"""
@@ -595,7 +600,7 @@ def dashboard():
     if not current_user.is_admin:
         return redirect(url_for('limited_dashboard'))
     
-    phones = Phone.query.all()
+    phones = Phone.query.filter_by(status="available").all()
     accessories = Accessory.query.all()
     
     # Calculate financial summaries for current inventory (phones + accessories)
@@ -662,7 +667,7 @@ def dashboard():
 @login_required
 def limited_dashboard():
     """Limited dashboard for non-admin users"""
-    phones = Phone.query.all()
+    phones = Phone.query.filter_by(status="available").all()
     accessories = Accessory.query.all()
     
     # Basic counts only
@@ -1472,7 +1477,7 @@ def logout():
 @login_required
 def create_sale_page():
     """Show create sale page"""
-    phones = Phone.query.all()
+    phones = Phone.query.filter_by(status="available").all()
     accessories = Accessory.query.all()
     
     # Get accessory categories for dropdown
@@ -1566,8 +1571,10 @@ def create_sale():
                         total_price=item_data['totalPrice']
                     )
                     sale_item.serial_number = phone.serial_number
-                    # Remove phone from inventory
-                    db.session.delete(phone)
+                    # Update phone status instead of deleting
+                    phone.status = "sold"
+                    phone.sold_date = datetime.utcnow()
+                    phone.sale_id = sale.id
             elif item_data['type'] in ['accessory', 'charger', 'case', 'screen_protector']:
                 accessory = Accessory.query.get(item_data['id'])
                 if accessory:
@@ -2250,6 +2257,18 @@ def get_accessory_categories_ajax():
         return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'})
 
 
+
+@app.route('/sold_phones')
+@login_required
+def sold_phones():
+    """View all sold phones with their details"""
+    if not current_user.is_admin:
+        return redirect(url_for('limited_dashboard'))
+    
+    # Get all sold phones with their sale information
+    sold_phones = Phone.query.filter_by(status="sold").order_by(Phone.sold_date.desc()).all()
+    
+    return render_template('sold_phones.html', sold_phones=sold_phones)
 
 # sell_phone route removed - replaced by comprehensive sales system
 
